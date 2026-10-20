@@ -1,0 +1,13 @@
+[Unit]
+Description=Pecker Tap recovery marker handler
+After=local-fs.target
+ConditionPathExists=/boot/PECKERTAP_RECOVERY
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'printf "Pecker Tap recovery mode.\nRemove /boot/PECKERTAP_RECOVERY and reboot to resume the game.\n" > /dev/tty1'
+ExecStart=/bin/sh -c 'systemctl start getty@tty1.service || true; systemctl start ssh.service 2>/dev/null || systemctl start sshd.service 2>/dev/null || true'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

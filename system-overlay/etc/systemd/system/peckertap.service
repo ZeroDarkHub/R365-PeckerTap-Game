@@ -1,0 +1,28 @@
+[Unit]
+Description=Pecker Tap dedicated console
+After=local-fs.target sound.target systemd-udev-settle.service
+Wants=sound.target
+Conflicts=emulationstation.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+ConditionPathExists=!/boot/PECKERTAP_RECOVERY
+
+[Service]
+Type=simple
+ExecStart=/opt/peckertap/bin/launch.sh
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=8
+KillMode=mixed
+StandardInput=tty-force
+StandardOutput=journal
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=no
+Nice=-5
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target

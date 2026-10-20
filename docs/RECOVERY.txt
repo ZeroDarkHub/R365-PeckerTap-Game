@@ -1,0 +1,31 @@
+PECKER TAP R36S RECOVERY
+
+Enter recovery mode from a Mac:
+1. Power the R36S off completely.
+2. Remove the OS microSD card and insert it into the Mac.
+3. Open the FAT partition named BOOT.
+4. Create an empty file at the top level named exactly:
+   PECKERTAP_RECOVERY
+5. Eject the card safely, return it to TF1, and power on.
+
+In recovery mode the game does not start. TTY1 and SSH are enabled for
+maintenance. Remove PECKERTAP_RECOVERY from BOOT and reboot to resume the game.
+
+Useful commands in recovery:
+  systemctl status peckertap
+  journalctl -u peckertap -b
+  systemctl restart peckertap
+  cat /proc/device-tree/model
+  cat /sys/class/drm/card0-DSI-1/modes 2>/dev/null
+  evtest
+  aplay -l
+
+If the display is black after a fresh image:
+- Power off; do not repeatedly hard-reset while filesystems are writing.
+- Restore the three current-card files saved under
+  BOOT/PeckerTap-Hardware-Backup one at a time only as directed.
+- The build backup is also at:
+  ~/Desktop/peckertap-r36s/hardware-backup/BOOT
+
+The current card appears to have Panel 5 history, but final panel compatibility
+must be established by physical boot testing.

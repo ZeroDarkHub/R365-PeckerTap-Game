@@ -1,0 +1,16 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Downloaded runtimes and ArkOS base images. Recreate with the documented
+# dependency/build steps; the expanded images are several gigabytes each.
+/cache/*
+!/cache/DEPENDENCIES.sha256
+
+# Generated staging tree. Rebuilt by scripts/build-*.sh.
+/build/
+
+# GitHub rejects the 7.4 GB raw SD-card image. Keep its smaller install
+# packages, screenshots, splash assets, and build manifest in the repository.
+/dist/PeckerTap-R36S.img
+/dist/PeckerTap-R36S.img.sha256

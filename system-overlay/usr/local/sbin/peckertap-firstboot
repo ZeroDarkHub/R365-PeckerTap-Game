@@ -1,0 +1,43 @@
+#!/bin/bash
+set -euo pipefail
+
+STAGING=/opt/peckertap-staging
+OVERLAY="$STAGING/peckertap-rootfs-overlay.tar.gz"
+
+echo "Pecker Tap first-boot installation starting"
+test -s "$OVERLAY"
+tar -xzf "$OVERLAY" -C /
+chmod 755 /opt/peckertap/bin/launch.sh /opt/peckertap/runtime/love.aarch64
+mkdir -p /var/lib/peckertap
+
+systemctl daemon-reload
+systemctl disable emulationstation.service 2>/dev/null || true
+systemctl mask emulationstation.service 2>/dev/null || true
+systemctl stop emulationstation.service 2>/dev/null || true
+
+for unit in bluetooth.service avahi-daemon.service smbd.service nmbd.service cups.service apt-daily.timer apt-daily-upgrade.timer; do
+  systemctl disable "$unit" 2>/dev/null || true
+  systemctl stop "$unit" 2>/dev/null || true
+done
+
+if ! mountpoint -q /roms; then
+  echo "EASYROMS is not mounted; refusing to finish the dedicated-console cleanup" >&2
+  exit 1
+fi
+find /roms -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+test -z "$(find /roms -mindepth 1 -maxdepth 1 -print -quit)"
+
+# These ArkOS provisioning bundles have already done their job by this boot.
+# Removing them ensures the installed console retains no packaged ROM tree.
+rm -f /roms.tar
+rm -rf /tempthemes
+
+systemctl enable peckertap.service peckertap-recovery.service
+systemctl disable peckertap-firstboot.service 2>/dev/null || true
+rm -f /etc/systemd/system/multi-user.target.wants/peckertap-firstboot.service
+rm -f "$OVERLAY"
+rmdir "$STAGING" 2>/dev/null || true
+
+sync
+systemctl start peckertap.service
+echo "Pecker Tap first-boot installation complete"

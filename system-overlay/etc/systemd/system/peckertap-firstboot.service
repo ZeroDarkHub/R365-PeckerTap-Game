@@ -1,0 +1,19 @@
+[Unit]
+Description=Install Pecker Tap dedicated-console overlay
+After=local-fs.target systemd-remount-fs.service firstboot.service ddtbcheck.service
+Before=emulationstation.service
+# ArkOS grows and converts EASYROMS across two rebooting first-boot passes.
+# Wait until its script has removed itself, then install Pecker Tap on the
+# following boot so the game and ROM cleanup cannot race partition changes.
+ConditionPathExists=!/boot/firstboot.sh
+ConditionPathExists=/opt/peckertap-staging/peckertap-rootfs-overlay.tar.gz
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/peckertap-firstboot
+StandardOutput=journal+console
+StandardError=journal+console
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

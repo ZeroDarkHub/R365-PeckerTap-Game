@@ -1,0 +1,24 @@
+{
+  "version": 4,
+  "name": "peckertap.zip",
+  "items": ["Pecker Tap.sh", "peckertap"],
+  "items_opt": [],
+  "attr": {
+    "title": "Pecker Tap",
+    "porter": ["ZeroDarkHub"],
+    "desc": "Offline bird-tapping arcade game, adapted for 640x480 R36S controls.",
+    "desc_md": null,
+    "inst": "Ready to run; no network or extra game data required.",
+    "inst_md": null,
+    "genres": ["arcade"],
+    "image": null,
+    "rtr": true,
+    "exp": true,
+    "runtime": [],
+    "store": [],
+    "availability": "full",
+    "reqs": ["power"],
+    "arch": ["aarch64"],
+    "min_glibc": ""
+  }
+}
