@@ -6,6 +6,7 @@ fail=0
 
 required=(
   game/main.lua game/conf.lua game/assets/PressStart2P-Regular.ttf
+  game/assets/duck-quack-quack.wav game/assets/ATTRIBUTION.md
   cache/love_11.5/love.aarch64 cache/love_11.5/libs.aarch64/liblove-11.5.so
   system-overlay/etc/systemd/system/peckertap.service
   system-overlay/opt/peckertap/bin/launch.sh

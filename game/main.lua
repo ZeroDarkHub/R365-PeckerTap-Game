@@ -36,6 +36,24 @@ local C = {
   green={0.290,0.627,0.157}, greenBorder={0.439,0.831,0.290}, panel={0.059,0.059,0.157,0.92}
 }
 
+local BIRD_PALETTES = {
+  {need=0,name="GOLD",body1=C.birdBody1,body2=C.birdBody2,wing=C.birdWing},
+  {need=5,name="SUNSET",body1={1,0.55,0.58},body2={0.90,0.22,0.34},wing={1,0.36,0.24}},
+  {need=15,name="SKY",body1={0.32,0.94,0.88},body2={0.08,0.58,0.72},wing={0.10,0.74,0.60}},
+  {need=30,name="MOON",body1={0.78,0.72,1},body2={0.45,0.33,0.82},wing={0.60,0.44,0.94}}
+}
+
+-- The complete loop is 52 seconds. Transitions overlap for two seconds so
+-- clear skies, wind, rain, storms, mist, and snow flow into one another.
+local WEATHER_SEGMENTS = {
+  {name="clear",frames=360}, {name="breeze",frames=300},
+  {name="rain",frames=540}, {name="storm",frames=420},
+  {name="mist",frames=420}, {name="snow",frames=540},
+  {name="clear",frames=540}
+}
+local WEATHER_FADE = 120
+local WEATHER_WIND = {clear=1,breeze=2.0,rain=1.45,storm=2.45,mist=0.55,snow=0.8}
+
 -- Exact browser palette progression from src/landingpage.jsx.
 local SKY_CYCLES = {
   {{0x3a/255,0x8a/255,0xbf/255},{0x87/255,0xce/255,0xeb/255},{0xb3/255,0xe5/255,0xfc/255}},
@@ -54,6 +72,8 @@ local fonts = {}
 local sounds = {}
 local music
 local musicVolume = 0.36
+local musicMix = {base=0.36,lead=0.30,drive=0}
+local musicTier = -1
 local nextQuackAt = tonumber(os.getenv("PECKERTAP_QUACK_AT")) or 9
 local quackScheduleState = 0x51554143
 local pipeGradients = {}
@@ -77,6 +97,8 @@ local function rand(a, b)
   if not b then return love.math.random() * a end
   return a + love.math.random() * (b - a)
 end
+
+local function mix(a,b,t) return a+(b-a)*t end
 
 local function font(size)
   size = math.max(7, math.floor(size + 0.5))
@@ -135,6 +157,23 @@ local function saveScores()
   love.filesystem.write("scores.txt", table.concat(rows, "\n") .. "\n")
 end
 
+local function loadFeathers()
+  if not love.filesystem.getInfo("feathers.txt") then return 0 end
+  return math.max(0,math.floor(tonumber(love.filesystem.read("feathers.txt")) or 0))
+end
+
+local function saveFeathers()
+  love.filesystem.write("feathers.txt",tostring(gs.totalFeathers).."\n")
+end
+
+local function birdPalette(total)
+  local selected=BIRD_PALETTES[1]
+  for _,palette in ipairs(BIRD_PALETTES) do
+    if total>=palette.need then selected=palette end
+  end
+  return selected
+end
+
 local function newBird()
   -- Preserve the bird's proven physical screen position while extending the
   -- browser world equally to the left and right.
@@ -142,10 +181,15 @@ local function newBird()
 end
 
 local function newClouds()
-  local out = {}
+  local out,seed = {},0x434c4f55
+  local function seeded()
+    seed=(seed*1664525+1013904223)%4294967296
+    return seed/4294967295
+  end
   local count=math.floor(5*W/BASE_W+0.5)
   for i=0,count-1 do
-    out[#out+1] = {x=(W/count)*i+rand(0,30),y=20+rand(0,H*0.22),w=36+rand(0,50),speed=0.15+rand(0,0.25),layer=i%2}
+    out[#out+1] = {x=(W/count)*i+seeded()*30,y=20+seeded()*(H*0.22),w=36+seeded()*50,
+      speed=0.15+seeded()*0.25,layer=i%2}
   end
   return out
 end
@@ -166,11 +210,49 @@ local function newStars()
   return out
 end
 
+local function newWeatherParticles()
+  local out,seed={},0x57454154
+  local function seeded()
+    seed=(seed*1664525+1013904223)%4294967296
+    return seed/4294967295
+  end
+  for i=1,104 do
+    out[i]={x=seeded()*W,y=seeded()*(H-GROUND_H),speed=2.2+seeded()*4.8,
+      size=0.7+seeded()*1.8,drift=seeded()*math.pi*2,phase=seeded()*math.pi*2}
+  end
+  return out
+end
+
+local function weatherAt(clock)
+  if gs and gs.weatherOverride then return gs.weatherOverride,gs.weatherOverride,0 end
+  local total=0
+  for _,segment in ipairs(WEATHER_SEGMENTS) do total=total+segment.frames end
+  local cursor=clock%total
+  for i,segment in ipairs(WEATHER_SEGMENTS) do
+    if cursor<segment.frames then
+      local nextName=WEATHER_SEGMENTS[i%#WEATHER_SEGMENTS+1].name
+      local transition=math.max(0,(cursor-(segment.frames-WEATHER_FADE))/WEATHER_FADE)
+      return segment.name,nextName,math.min(1,transition)
+    end
+    cursor=cursor-segment.frames
+  end
+  return "clear","clear",0
+end
+
+local function weatherAmount(name)
+  local current,nextName,t=weatherAt(gs.weatherClock)
+  local amount=0
+  if current==name then amount=amount+1-t end
+  if nextName==name then amount=amount+t end
+  return amount
+end
+
 local function newState(phase)
   local hi, board = loadScores()
   return {phase=phase or "splash",frame=0,score=0,hiScore=hi,leaderboard=board,bird=newBird(),pipes={},clouds=newClouds(),stars=newStars(),
-    particles={},floatScores={},groundX=0,shakeMag=0,shakeX=0,shakeY=0,deathTimer=0,menuBob=0,pipeTimer=0,
-    skyT=0,skyPhase=1}
+    particles={},floatScores={},floatFeathers={},groundX=0,shakeMag=0,shakeX=0,shakeY=0,deathTimer=0,menuBob=0,pipeTimer=0,
+    skyT=0,skyPhase=1,totalFeathers=loadFeathers(),runFeathers=0,nextFeatherIn=2,collectibleState=0x46454154,
+    weatherClock=0,weatherParticles=newWeatherParticles(),cloudState=0x434c4f55,effectsState=0x45464658}
 end
 
 local ORIGINAL_PIPE_TRAVEL=(BASE_W+16)-(BASE_W*0.22)
@@ -179,18 +261,39 @@ local HORIZONTAL_SPEED_SCALE=LANDSCAPE_PIPE_TRAVEL/ORIGINAL_PIPE_TRAVEL
 local function pipeSpeed(score) return (PIPE_SPEED_BASE + score * PIPE_SPEED_INC)*HORIZONTAL_SPEED_SCALE end
 local function wingFrame(frame) return math.floor(frame / 6) % 3 end
 
+local function collectibleRandom()
+  gs.collectibleState=(gs.collectibleState*1664525+1013904223)%4294967296
+  return gs.collectibleState/4294967295
+end
+
+local function visualRandom(field,a,b)
+  gs[field]=(gs[field]*1664525+1013904223)%4294967296
+  local value=gs[field]/4294967295
+  if not a then return value end
+  if not b then return value*a end
+  return a+value*(b-a)
+end
+
 local function makePipe(score)
   local gap = math.max(PIPE_GAP_MIN, PIPE_GAP_BASE - score * PIPE_GAP_DEC)
   local minY, maxY = 50, H - GROUND_H - 50 - gap
-  return {x=W+16,topH=minY+rand(0,maxY-minY),gap=gap,passed=false}
+  local pipe={x=W+16,topH=minY+rand(0,maxY-minY),gap=gap,passed=false}
+  gs.nextFeatherIn=gs.nextFeatherIn-1
+  if gs.nextFeatherIn<=0 then
+    local edge=math.max(25,math.min(33,gap*0.22))
+    local upper=collectibleRandom()<0.5
+    pipe.feather={y=pipe.topH+(upper and edge or gap-edge),phase=collectibleRandom()*math.pi*2,collected=false}
+    gs.nextFeatherIn=3+math.floor(collectibleRandom()*3)
+  end
+  return pipe
 end
 
-local function spawnParticles(x,y,count)
-  local palette = {C.yellow,C.birdBeak,C.white}
+local function spawnParticles(x,y,count,palette)
+  palette=palette or {C.yellow,C.birdBeak,C.white}
   for i=0,count-1 do
-    local angle, speed = rand(0,math.pi*2), 1.2+rand(0,3.2)
+    local angle, speed = visualRandom("effectsState",0,math.pi*2), 1.2+visualRandom("effectsState",0,3.2)
     gs.particles[#gs.particles+1] = {x=x,y=y,vx=math.cos(angle)*speed,vy=math.sin(angle)*speed-1,
-      life=1,color=palette[i%3+1],size=2+rand(0,4)}
+      life=1,color=palette[i%#palette+1],size=2+visualRandom("effectsState",0,4)}
   end
 end
 
@@ -205,7 +308,11 @@ local function triggerDeath()
   if gs.phase ~= "play" then return end
   play("hit")
   play("defeat")
-  if music then musicVolume=0.06; music:setVolume(musicVolume) end
+  if music then
+    musicVolume=0.06
+    musicMix.base,musicMix.lead,musicMix.drive=0.025,0.018,0
+    for _,layer in ipairs(music) do layer:setVolume(0.025) end
+  end
   gs.phase, gs.deathTimer, gs.shakeMag = "dying", 0, 11
   spawnParticles(gs.bird.x, gs.bird.y, 14)
   gs.leaderboard[#gs.leaderboard+1] = gs.score
@@ -222,6 +329,24 @@ local function tickParticles()
   end
 end
 
+local function collectFeather(pipe,bird)
+  local feather=pipe.feather
+  if not feather or feather.collected then return end
+  local fx=pipe.x+PIPE_WIDTH/2
+  local fy=feather.y+math.sin(gs.frame*0.09+feather.phase)*3
+  local dx,dy=bird.x-fx,bird.y-fy
+  if dx*dx+dy*dy>20*20 then return end
+  feather.collected=true
+  gs.runFeathers=gs.runFeathers+1
+  gs.totalFeathers=gs.totalFeathers+1
+  saveFeathers()
+  play("collect")
+  gs.shakeMag=math.max(gs.shakeMag,2.8)
+  spawnParticles(fx,fy,18,{C.yellow,{1,0.97,0.55},C.white})
+  gs.floatFeathers[#gs.floatFeathers+1]={x=fx,y=fy-18,life=1}
+  print(string.format("event=feather_collected run=%d total=%d",gs.runFeathers,gs.totalFeathers))
+end
+
 local function fixedUpdate()
   gs.frame = gs.frame + 1
   gs.menuBob = math.sin(gs.frame * 0.055) * 5
@@ -229,9 +354,14 @@ local function fixedUpdate()
     if gs.frame >= 105 then gs.phase="menu"; gs.frame=0 end
     return
   end
+  gs.weatherClock=gs.weatherClock+1
+  local weatherNow,weatherNext,weatherT=weatherAt(gs.weatherClock)
+  local wind=mix(WEATHER_WIND[weatherNow] or 1,WEATHER_WIND[weatherNext] or 1,weatherT)
   for _,c in ipairs(gs.clouds) do
-    c.x=c.x-c.speed
-    if c.x+c.w<0 then c.x=W+8; c.y=20+rand(0,H*0.22); c.w=36+rand(0,50) end
+    c.x=c.x-c.speed*wind
+    if c.x+c.w<0 then
+      c.x=W+8; c.y=20+visualRandom("cloudState",0,H*0.22); c.w=36+visualRandom("cloudState",0,50)
+    end
   end
   local groundSpeed=(gs.phase=="play" or gs.phase=="dying") and pipeSpeed(gs.score) or 0.5
   gs.groundX=(gs.groundX-groundSpeed)%40
@@ -260,6 +390,7 @@ local function fixedUpdate()
   local speed=pipeSpeed(gs.score)
   for i=#gs.pipes,1,-1 do
     local p=gs.pipes[i]; p.x=p.x-speed
+    collectFeather(p,b)
     if p.x<=-PIPE_WIDTH-20 then table.remove(gs.pipes,i)
     elseif not p.passed and p.x+PIPE_WIDTH<b.x then
       p.passed=true; gs.score=gs.score+1
@@ -272,6 +403,10 @@ local function fixedUpdate()
     local f=gs.floatScores[i]; f.y=f.y-1.4; f.life=f.life-0.028
     if f.life<=0 then table.remove(gs.floatScores,i) end
   end
+  for i=#gs.floatFeathers,1,-1 do
+    local f=gs.floatFeathers[i]; f.y=f.y-1.1; f.life=f.life-0.022
+    if f.life<=0 then table.remove(gs.floatFeathers,i) end
+  end
   tickParticles()
   local bx,by,bw,bh=b.x-11,b.y-11,22,22
   if b.y>=H-GROUND_H-14 or b.y<=12 then triggerDeath(); return end
@@ -279,8 +414,6 @@ local function fixedUpdate()
     if bx+bw>p.x+4 and bx<p.x+PIPE_WIDTH-4 and (by<p.topH or by+bh>p.topH+p.gap) then triggerDeath(); return end
   end
 end
-
-local function mix(a,b,t) return a+(b-a)*t end
 
 local function sky()
   local cur=SKY_CYCLES[gs.skyPhase]
@@ -324,6 +457,81 @@ local function drawCloud(c, visibility)
   love.graphics.circle("fill",c.x+c.w*0.52,c.y+h*0.72,h*0.44)
 end
 
+local function drawWeatherBackgroundMode(mode,alpha)
+  if alpha<=0 then return end
+  if mode=="rain" then
+    love.graphics.setColor(0.12,0.24,0.38,0.08*alpha)
+    love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
+  elseif mode=="storm" then
+    love.graphics.setColor(0.025,0.045,0.11,0.28*alpha)
+    love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
+    local flash=gs.weatherClock%420
+    if (flash>=252 and flash<=255) or (flash>=270 and flash<=271) then
+      love.graphics.setColor(0.78,0.88,1,0.34*alpha)
+      love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
+    end
+  elseif mode=="mist" then
+    love.graphics.setColor(0.86,0.92,0.96,0.08*alpha)
+    love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
+    for i=1,10 do
+      local p=gs.weatherParticles[i]
+      local x=(p.x+gs.frame*(0.08+p.size*0.025))%(W+180)-90
+      local y=105+(i%5)*68+math.sin(gs.frame*0.012+p.phase)*12
+      love.graphics.setColor(0.93,0.97,1,(0.025+p.size*0.014)*alpha)
+      love.graphics.ellipse("fill",x,y,80+p.size*34,18+p.size*6)
+    end
+  elseif mode=="snow" then
+    love.graphics.setColor(0.48,0.64,0.84,0.055*alpha)
+    love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
+  end
+end
+
+local function drawWeatherBackground()
+  local current,nextName,t=weatherAt(gs.weatherClock)
+  drawWeatherBackgroundMode(current,1-t)
+  drawWeatherBackgroundMode(nextName,t)
+end
+
+local function drawWeatherForegroundMode(mode,alpha)
+  if alpha<=0 then return end
+  if mode=="rain" or mode=="storm" then
+    local storm=mode=="storm"
+    local count=storm and 104 or 72
+    love.graphics.setLineWidth(storm and 1.6 or 1.1)
+    for i=1,count do
+      local p=gs.weatherParticles[i]
+      local fall=storm and 1.65 or 1.15
+      local x=(p.x-gs.frame*p.speed*0.52*fall)%(W+50)-20
+      local y=(p.y+gs.frame*p.speed*fall)%(H-GROUND_H+30)-15
+      love.graphics.setColor(0.72,0.86,1,(storm and 0.34 or 0.24)*alpha)
+      love.graphics.line(x,y,x-5-p.size*2,y+11+p.size*5)
+    end
+  elseif mode=="breeze" then
+    love.graphics.setLineWidth(1)
+    for i=4,64,6 do
+      local p=gs.weatherParticles[i]
+      local x=(p.x-gs.frame*(1.5+p.speed*0.3))%(W+90)-45
+      local y=55+(p.y%(H-GROUND_H-90))
+      love.graphics.setColor(1,1,1,0.12*alpha)
+      love.graphics.line(x,y,x+12+p.size*6,y+math.sin(gs.frame*0.03+p.phase)*2)
+    end
+  elseif mode=="snow" then
+    for i=1,72 do
+      local p=gs.weatherParticles[i]
+      local x=(p.x+math.sin(gs.frame*0.018+p.phase)*(8+p.size*3))%W
+      local y=(p.y+gs.frame*(0.42+p.speed*0.13))%(H-GROUND_H)
+      love.graphics.setColor(1,1,1,(0.42+p.size*0.12)*alpha)
+      love.graphics.circle("fill",x,y,p.size)
+    end
+  end
+end
+
+local function drawWeatherForeground()
+  local current,nextName,t=weatherAt(gs.weatherClock)
+  drawWeatherForegroundMode(current,1-t)
+  drawWeatherForegroundMode(nextName,t)
+end
+
 local function gradientSample(t)
   local a,b,u
   if t<=0.22 then a,b,u=C.pipeDark,C.pipeLight,t/0.22
@@ -363,6 +571,32 @@ local function drawPipe(p)
   love.graphics.setColor(0,0,0,0.14); love.graphics.rectangle("fill",p.x+PIPE_WIDTH-9,botY,9,H-botY)
 end
 
+local function drawFeatherShape(x,y,scale,angle,alpha)
+  love.graphics.push(); love.graphics.translate(x,y); love.graphics.rotate(angle or 0); love.graphics.scale(scale or 1)
+  love.graphics.setColor(1,0.80,0.12,alpha or 1)
+  love.graphics.polygon("fill",0,-13,7,-8,8,-1,4,8,0,14,-4,8,-8,-1,-6,-8)
+  love.graphics.setColor(1,0.96,0.50,alpha or 1); love.graphics.setLineWidth(1.6)
+  love.graphics.line(0,-10,0,13); love.graphics.line(0,-4,5,-7); love.graphics.line(0,1,6,-2)
+  love.graphics.line(0,5,-5,1); love.graphics.line(0,9,-3,6)
+  love.graphics.setColor(0.72,0.38,0.03,0.7*(alpha or 1)); love.graphics.polygon("line",0,-13,7,-8,8,-1,4,8,0,14,-4,8,-8,-1,-6,-8)
+  love.graphics.pop()
+end
+
+local function drawCollectible(pipe)
+  if not pipe.feather or pipe.feather.collected then return end
+  local feather=pipe.feather
+  local x=pipe.x+PIPE_WIDTH/2
+  local y=feather.y+math.sin(gs.frame*0.09+feather.phase)*3
+  local glow=0.55+0.25*math.sin(gs.frame*0.11+feather.phase)
+  love.graphics.setColor(1,0.85,0.22,0.12+glow*0.12); love.graphics.circle("fill",x,y,19)
+  for i=0,3 do
+    local a=gs.frame*0.025+feather.phase+i*math.pi/2
+    love.graphics.setColor(1,0.95,0.55,0.42)
+    love.graphics.circle("fill",x+math.cos(a)*16,y+math.sin(a)*12,1.4)
+  end
+  drawFeatherShape(x,y,0.82,math.sin(gs.frame*0.045+feather.phase)*0.18,1)
+end
+
 local function drawGround()
   local gy=H-GROUND_H; color(C.ground); love.graphics.rectangle("fill",0,gy,W,GROUND_H)
   color(C.dirt); love.graphics.rectangle("fill",0,gy+18,W,GROUND_H-18)
@@ -373,18 +607,19 @@ local function drawGround()
 end
 
 local function drawBird(b)
+  local palette=birdPalette(gs.totalFeathers)
   love.graphics.push(); love.graphics.translate(math.floor(b.x),math.floor(b.y)); love.graphics.rotate(math.rad(b.rot)); love.graphics.scale(b.stretch,b.squash)
-  color(C.birdBody2); rounded("fill",-14,-14,28,28,7)
-  color(C.birdBody1); rounded("fill",-12,-12,24,24,6)
+  color(palette.body2); rounded("fill",-14,-14,28,28,7)
+  color(palette.body1); rounded("fill",-12,-12,24,24,6)
   love.graphics.push(); love.graphics.translate(-3,-4); love.graphics.rotate(-0.3)
   love.graphics.setColor(1,1,1,0.35); love.graphics.ellipse("fill",0,0,6,4.5); love.graphics.pop()
   local wingY=({3,5,7})[math.min(b.wingFrame+1,3)]
-  color(C.birdWing); rounded("fill",-15,wingY,10,7,3)
+  color(palette.wing); rounded("fill",-15,wingY,10,7,3)
   color(C.white); love.graphics.circle("fill",5,-4,5)
   if b.blinkOpen then
     color(C.eye); love.graphics.circle("fill",6,-4,3); color(C.white); love.graphics.circle("fill",7,-5.2,1)
   else
-    color(C.birdBody2); love.graphics.rectangle("fill",1,-7,9,5); color(C.eye); love.graphics.rectangle("fill",2,-6,7,2)
+    color(palette.body2); love.graphics.rectangle("fill",1,-7,9,5); color(C.eye); love.graphics.rectangle("fill",2,-6,7,2)
   end
   color(C.birdBeak); love.graphics.polygon("fill",13,-3.5,23,0.5,13,4.5)
   love.graphics.pop()
@@ -393,6 +628,9 @@ end
 local function drawHUD()
   love.graphics.setColor(0,0,0,0.3); rounded("fill",W/2-32,8,64,36,8)
   text(tostring(gs.score),W/2,26,22,C.white)
+  love.graphics.setColor(0,0,0,0.28); rounded("fill",14,10,70,32,8)
+  drawFeatherShape(31,26,0.62,-0.12,1)
+  text(tostring(gs.runFeathers),47,26,11,C.yellow,"left",28)
 end
 
 local function drawMenu()
@@ -402,6 +640,8 @@ local function drawMenu()
     text("BEST",W/2,H*0.25+12,BASE_W*0.032,{0.8,0.8,0.8})
     text(tostring(gs.hiScore),W/2,H*0.25+26,BASE_W*0.042,C.yellow)
   end
+  local palette=birdPalette(gs.totalFeathers)
+  text("FEATHERS "..gs.totalFeathers.."  "..palette.name,W/2,H*0.315,BASE_W*0.022,{1,0.91,0.42})
   local pulse=0.7+(0.5+0.5*math.sin(gs.frame*0.1))*0.3
   love.graphics.setColor(0,0,0,0.4*pulse); rounded("fill",W/2-88,H*0.38,176,38,9)
   text("TAP TO START",W/2,H*0.38+19,BASE_W*0.036,{1,1,1,pulse})
@@ -440,6 +680,7 @@ local function drawDead()
   text("SCORE",W/2-46,py+64,BASE_W*0.024,{0.6,0.6,0.6}); text("BEST",W/2+50,py+64,BASE_W*0.024,{0.6,0.6,0.6})
   text(tostring(gs.score),W/2-46,py+92,24,C.white); text(tostring(gs.hiScore),W/2+50,py+92,24,gs.score>0 and gs.score>=gs.hiScore and C.yellow or C.white)
   if gs.score>0 and gs.score>=gs.hiScore then text("NEW!",W/2+50,py+110,BASE_W*0.022,C.yellow) end
+  text("FEATHERS +"..gs.runFeathers.."  TOTAL "..gs.totalFeathers,W/2,py+128,BASE_W*0.019,{1,0.90,0.35})
   if gs.phase=="dead" then
     color(C.green,0.82+0.18*math.sin(gs.frame*0.13)); rounded("fill",W/2-70,py+148,140,40,10)
     color(C.greenBorder); love.graphics.setLineWidth(2); rounded("line",W/2-70,py+148,140,40,10); text("PLAY AGAIN",W/2,py+168,BASE_W*0.032,C.white)
@@ -453,10 +694,13 @@ local function drawPlayfield()
   if cloudVis>0.01 then
     for _,c in ipairs(gs.clouds) do drawCloud(c,cloudVis) end
   end
-  for _,p in ipairs(gs.pipes) do drawPipe(p) end; drawGround()
+  drawWeatherBackground()
+  for _,p in ipairs(gs.pipes) do drawPipe(p); drawCollectible(p) end; drawGround()
   for _,p in ipairs(gs.particles) do color(p.color,math.max(0,p.life)); rounded("fill",p.x-p.size/2,p.y-p.size/2,p.size,p.size,2) end
   if gs.phase~="dead" then drawBird(gs.bird) end
   for _,f in ipairs(gs.floatScores) do color(C.yellow,math.max(0,f.life)); text("+1",f.x,f.y,16,C.yellow) end
+  for _,f in ipairs(gs.floatFeathers) do text("FEATHER!",f.x,f.y,9,{1,0.90,0.28,math.max(0,f.life)}) end
+  drawWeatherForeground()
   love.graphics.pop()
   if gs.phase=="menu" then drawMenu() elseif gs.phase=="ready" then drawHUD(); drawReady()
   elseif gs.phase=="play" then drawHUD() elseif gs.phase=="dying" or gs.phase=="dead" then drawHUD(); drawDead() end
@@ -507,16 +751,17 @@ local function nextQuackDelay()
   return 10 + (quackScheduleState / 4294967295) * 12
 end
 
--- Original "Skybound Peck" theme: a compact 8-bit arrangement synthesized at
--- startup, so the soundtrack remains fully offline and needs no sampled music.
--- Eight bars of pulse lead, chord arpeggios, triangle bass, and tiny noise drums
--- form a seamless 12.8-second loop at 150 BPM.
+-- Original "Skybound Peck" theme, split into synchronized base, lead, and drive
+-- layers. Score, sky, and weather continuously reshape their mix while all
+-- synthesis remains local and offline.
 local function makeSoundtrack()
   local rate, bpm, totalSteps = 22050, 150, 128
   local stepDuration = 60 / bpm / 4
   local duration = totalSteps * stepDuration
   local samples = math.floor(duration * rate)
-  local data = love.sound.newSoundData(samples, rate, 16, 1)
+  local baseData = love.sound.newSoundData(samples, rate, 16, 1)
+  local leadData = love.sound.newSoundData(samples, rate, 16, 1)
+  local driveData = love.sound.newSoundData(samples, rate, 16, 1)
 
   local lead = {
     74,77,81,86,84,81,77,0, 70,74,77,82,81,77,74,0,
@@ -549,7 +794,7 @@ local function makeSoundtrack()
     local stepIndex = math.floor(stepFloat) % totalSteps
     local bar = math.floor(stepIndex / 16) + 1
     local inStep = (stepFloat - math.floor(stepFloat)) * stepDuration
-    local v = 0
+    local baseV,leadV,driveV = 0,0,0
 
     -- Lead notes last an eighth note, with a tiny vibrato that gives the tune
     -- a hand-played arcade quality without blurring the pitch.
@@ -560,14 +805,14 @@ local function makeSoundtrack()
       local noteLen = stepDuration * 2
       local env = envelope(notePos, noteLen * 0.9, 0.012, 0.045)
       local vibrato = math.sin(2 * math.pi * 5.2 * t) * 0.0022
-      v = v + pulse(t * hz(leadNote) + vibrato, 0.25) * env * 0.22
+      leadV = leadV + pulse(t * hz(leadNote) + vibrato, 0.25) * env * 0.22
     end
 
     -- A bright three-note arpeggio supplies the classic handheld shimmer.
     local chord = chords[bar]
     local arpNote = chord[arpOrder[stepIndex % 8 + 1]] + 12
     local arpEnv = envelope(inStep, stepDuration * 0.78, 0.004, 0.028)
-    v = v + pulse(t * hz(arpNote), 0.125) * arpEnv * 0.075
+    baseV = baseV + pulse(t * hz(arpNote), 0.125) * arpEnv * 0.075
 
     -- Bass changes on quarter notes and alternates root, octave, and fifth.
     local beat = math.floor((stepIndex % 16) / 4)
@@ -575,34 +820,76 @@ local function makeSoundtrack()
     local bassNote = bassRoots[bar] + bassOffsets[beat + 1]
     local beatPos = (stepIndex % 4) * stepDuration + inStep
     local bassEnv = envelope(beatPos, stepDuration * 3.7, 0.008, 0.08)
-    v = v + triangle(t * hz(bassNote)) * bassEnv * 0.17
+    baseV = baseV + triangle(t * hz(bassNote)) * bassEnv * 0.17
 
     -- Deterministic one-bit percussion: kick on 1/3, snare on 2/4, hats on 8ths.
     local halfBeatPos = (stepIndex % 8) * stepDuration + inStep
     if halfBeatPos < 0.13 then
       local u = halfBeatPos / 0.13
       local kickHz = 105 - 62 * u
-      v = v + math.sin(2 * math.pi * kickHz * halfBeatPos) * math.exp(-7 * u) * 0.28
+      baseV = baseV + math.sin(2 * math.pi * kickHz * halfBeatPos) * math.exp(-7 * u) * 0.28
     end
     local snarePos = ((stepIndex + 4) % 8) * stepDuration + inStep
     local n = noise()
     if snarePos < 0.11 then
-      v = v + n * math.exp(-8 * snarePos / 0.11) * 0.13
+      baseV = baseV + n * math.exp(-8 * snarePos / 0.11) * 0.13
     end
     local hatPos = (stepIndex % 2) * stepDuration + inStep
     if hatPos < 0.028 then
-      v = v + n * math.exp(-9 * hatPos / 0.028) * 0.045
+      baseV = baseV + n * math.exp(-9 * hatPos / 0.028) * 0.018
+      driveV = driveV + n * math.exp(-9 * hatPos / 0.028) * 0.10
+    end
+
+    -- The drive layer adds a syncopated octave sparkle and a firmer pulse. It
+    -- begins silent, then fades in as the player proves the run.
+    if stepIndex%2==1 then
+      local driveNote=chord[(math.floor(stepIndex/2)%3)+1]+24
+      local driveEnv=envelope(inStep,stepDuration*0.72,0.003,0.025)
+      driveV=driveV+pulse(t*hz(driveNote),0.125)*driveEnv*0.07
+    end
+    if stepIndex%8==6 and inStep<0.09 then
+      driveV=driveV+triangle(t*hz(bassRoots[bar]+19))*math.exp(-7*inStep/0.09)*0.09
     end
 
     -- Fade only the loop seam; this prevents a click without softening the beat.
     local seam = math.min(1, t / 0.012, (duration - t) / 0.012)
-    data:setSample(i, math.max(-1, math.min(1, v * seam)))
+    baseData:setSample(i, math.max(-1, math.min(1, baseV * seam)))
+    leadData:setSample(i, math.max(-1, math.min(1, leadV * seam)))
+    driveData:setSample(i, math.max(-1, math.min(1, driveV * seam)))
   end
 
-  local source = love.audio.newSource(data, "static")
-  source:setLooping(true)
-  source:setVolume(musicVolume)
-  return source
+  local function layer(data)
+    local source=love.audio.newSource(data,"static")
+    source:setLooping(true); source:setVolume(0)
+    return source
+  end
+  return {layer(baseData),layer(leadData),layer(driveData)}
+end
+
+local function updateMusicMix(dt)
+  if not music then return end
+  local master=gs.phase=="splash" and 0.36 or gs.phase=="menu" and 0.32
+    or (gs.phase=="ready" or gs.phase=="play") and 0.23 or 0.07
+  musicVolume=musicVolume+(master-musicVolume)*math.min(1,dt*3.5)
+  local night=starAlpha()
+  local storm=weatherAmount("storm")
+  local rain=weatherAmount("rain")
+  local tier=gs.score>=16 and 3 or gs.score>=8 and 2 or gs.score>=3 and 1 or 0
+  local energy=({0,0.34,0.68,1})[tier+1]
+  local targetBase=musicVolume*(1-night*0.10-storm*0.10)
+  local targetLead=musicVolume*(0.94-night*0.36-storm*0.20-rain*0.08)
+  local targetDrive=musicVolume*energy*(0.95-night*0.52-storm*0.30-rain*0.10)
+  local blend=math.min(1,dt*2.7)
+  musicMix.base=mix(musicMix.base,targetBase,blend)
+  musicMix.lead=mix(musicMix.lead,targetLead,blend)
+  musicMix.drive=mix(musicMix.drive,math.max(0,targetDrive),blend)
+  music[1]:setVolume(musicMix.base)
+  music[2]:setVolume(musicMix.lead)
+  music[3]:setVolume(musicMix.drive)
+  if tier~=musicTier then
+    musicTier=tier
+    print(string.format("event=music_tier tier=%d score=%d",tier,gs.score))
+  end
 end
 
 local function action()
@@ -626,6 +913,7 @@ function love.load()
   sounds.flap=makeTone(0.10,{{start=0,duration=0.09,f1=540,f2=370,gain=0.18,wave="sine"}})
   sounds.score=makeTone(0.27,{{start=0,duration=0.11,f1=660,f2=660,gain=0.09,wave="square"},{start=0.07,duration=0.11,f1=880,f2=880,gain=0.09,wave="square"},{start=0.14,duration=0.11,f1=1100,f2=1100,gain=0.09,wave="square"}})
   sounds.hit=makeTone(0.22,{{start=0,duration=0.18,f1=220,f2=75,gain=0.28,wave="saw"},{start=0.06,duration=0.12,f1=110,f2=60,gain=0.15,wave="sine"}})
+  sounds.collect=makeTone(0.34,{{start=0,duration=0.13,f1=880,f2=1047,gain=0.12,wave="square"},{start=0.08,duration=0.14,f1=1175,f2=1397,gain=0.11,wave="square"},{start=0.17,duration=0.15,f1=1568,f2=1760,gain=0.10,wave="sine"}})
   sounds.quack=loadQuack()
   sounds.defeat=makeTone(1.22,{
     {start=0.04,duration=0.17,f1=587,f2=587,gain=0.09,wave="square"},
@@ -636,23 +924,33 @@ function love.load()
     {start=0.76,duration=0.42,f1=220,f2=82,gain=0.14,wave="saw"},
     {start=0.78,duration=0.38,f1=196,f2=110,gain=0.13,wave="sine"}
   })
-  music=makeSoundtrack(); music:play()
+  music=makeSoundtrack()
+  for _,layer in ipairs(music) do layer:play() end
   local capturePhase=os.getenv("PECKERTAP_CAPTURE_PHASE") or "menu"
   gs=newState(screenshotPending and capturePhase or "splash")
   local previewSky=tonumber(os.getenv("PECKERTAP_PREVIEW_SKY"))
   if previewSky then gs.skyPhase=math.max(1,math.min(#SKY_CYCLES,math.floor(previewSky))); gs.skyT=0 end
-  print("event=startup renderer=love2d resolution=640x480 offline=true")
+  local previewWeather=os.getenv("PECKERTAP_PREVIEW_WEATHER")
+  if previewWeather and WEATHER_WIND[previewWeather] then gs.weatherOverride=previewWeather end
+  local previewScore=tonumber(os.getenv("PECKERTAP_PREVIEW_SCORE"))
+  if previewScore then gs.score=math.max(0,math.floor(previewScore)) end
+  local previewFeathers=tonumber(os.getenv("PECKERTAP_PREVIEW_FEATHERS"))
+  if previewFeathers then gs.totalFeathers=math.max(0,math.floor(previewFeathers)) end
+  if os.getenv("PECKERTAP_PREVIEW_COLLECTIBLE")=="1" then
+    gs.pipes[#gs.pipes+1]={x=gs.bird.x+138,topH=gs.bird.y-76,gap=152,passed=false,
+      feather={y=gs.bird.y-45,phase=0,collected=false}}
+  end
+  if os.getenv("PECKERTAP_TEST_COLLECT")=="1" then
+    gs.pipes[#gs.pipes+1]={x=gs.bird.x-PIPE_WIDTH/2,topH=gs.bird.y-70,gap=140,passed=false,
+      feather={y=gs.bird.y,phase=0,collected=false}}
+  end
+  print("event=startup renderer=love2d resolution=640x480 offline=true features=weather,collectibles,dynamic-music")
 end
 
 function love.update(dt)
   elapsed=elapsed+dt; accumulator=math.min(accumulator+dt,STEP*5)
   while accumulator>=STEP do fixedUpdate(); accumulator=accumulator-STEP end
-  if music then
-    local target = gs.phase=="splash" and 0.36 or gs.phase=="menu" and 0.32
-      or (gs.phase=="ready" or gs.phase=="play") and 0.23 or 0.07
-    musicVolume = musicVolume + (target - musicVolume) * math.min(1, dt * 3.5)
-    music:setVolume(musicVolume)
-  end
+  updateMusicMix(dt)
   if elapsed>=nextQuackAt then
     if gs.phase=="menu" or gs.phase=="ready" or gs.phase=="play" then play("quack"); print("event=quack") end
     nextQuackAt=elapsed+nextQuackDelay()

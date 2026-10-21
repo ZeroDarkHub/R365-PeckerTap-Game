@@ -9,12 +9,16 @@ Do not mark a test passed without observing it on the handheld.
 3. Day, dusk, star field, night, dawn, and sunrise palettes render without artifacts.
 4. A/B/X/Y, D-pad, shoulders, Start, and analog-up respond on the first press.
 5. Flap-to-motion latency feels immediate and frame pacing stays consistent.
-6. Flap, score chime, and collision sounds play cleanly at a safe volume.
-7. Best score persists across a reboot.
-8. Five intentional crash tests do not create an endless restart loop.
-9. Hold Select + Start for two seconds and verify clean shutdown.
-10. Create the BOOT recovery marker and verify the game is skipped.
-11. Remove the marker and verify normal direct boot resumes.
+6. Flap, score, real quack, feather pickup, collision, and defeat sounds play cleanly.
+7. The soundtrack gains energy at scores 3, 8, and 16, then softens at night and in storms.
+8. Clear, breeze, rain, storm/lightning, mist, and snow transitions stay readable.
+9. Golden feathers appear near pipe-gap edges and can be collected.
+10. Best score and feather total persist across a reboot.
+11. Bird colors unlock at 5, 15, and 30 total feathers.
+12. Five intentional crash tests do not create an endless restart loop.
+13. Hold Select + Start for two seconds and verify clean shutdown.
+14. Create the BOOT recovery marker and verify the game is skipped.
+15. Remove the marker and verify normal direct boot resumes.
 
 If anything fails, capture:
 

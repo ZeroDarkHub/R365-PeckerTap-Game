@@ -8,9 +8,15 @@ project at `~/Desktop/peckertap` is not modified.
 - Native 640×480 fullscreen game using the ARM64 LÖVE 11.5 runtime (SDL2/OpenGL ES).
 - The browser game's procedural bird, pipes, clouds, audio, score persistence,
   and day → dusk → night → dawn sky cycle.
-- The original “Skybound Peck” 8-bit soundtrack, synthesized locally at boot
-  and mixed beneath the flap, score, occasional real mallard double-quack, and original
-  descending game-over jingle.
+- The original “Skybound Peck” 8-bit soundtrack, synthesized locally at boot as
+  three synchronized layers. Its arrangement builds with the score and softens
+  naturally at night and during rain or storms.
+- A smooth procedural weather cycle spanning clear skies, breeze, rain, storms,
+  mist, and snow without affecting the original flight physics.
+- Risk/reward golden feathers near pipe edges, with a persistent collection
+  total, pickup effects, and new bird palettes unlocked at 5, 15, and 30.
+- The flap, score, occasional real mallard double-quack, collectible sparkle,
+  and original descending game-over jingle mixed over the soundtrack.
 - Edge-to-edge 640×480 landscape playfield with the sky, clouds, stars, pipes,
   and ground extended across the entire LCD. There are no side instructions,
   branding, status panels, or decorative interface.
@@ -22,6 +28,12 @@ project at `~/Desktop/peckertap` is not modified.
 Normal boot is:
 
 `POWER ON → ARKOS KERNEL/DRIVERS → PECKER TAP SPLASH → GAMEPLAY`
+
+## Feature preview
+
+| Storm collectible | Snow pickup and palette unlock |
+|---|---|
+| ![Storm, layered rain, and a golden feather](dist/peckertap-r36s-storm-feather.png) | ![Snow, feather pickup particles, and the sunset bird](dist/peckertap-r36s-snow-pickup.png) |
 
 There is no browser, Electron, X11 desktop, login prompt, or launcher in the
 normal path.

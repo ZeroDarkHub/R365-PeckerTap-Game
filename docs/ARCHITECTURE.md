@@ -88,13 +88,20 @@ Sources:
 - Matching outlined pixel text, smooth horizontal pipe gradients, bird highlight,
   particle color sequence, and menu animation timing.
 - An original offline chiptune soundtrack synthesized at startup: eight bars at
-  150 BPM with pulse-wave lead, arpeggios, triangle bass, and deterministic
-  noise percussion. It begins with the splash, loops seamlessly, and ducks
-  during gameplay so the original action sounds remain clear.
+  150 BPM split into synchronized base, lead, and drive layers. The drive layer
+  enters progressively at scores 3, 8, and 16; night, rain, and storms reshape
+  the mix without restarting the seamless loop.
 - A separately seeded quack scheduler adds a real female mallard “quack quack”
   every 10–22 seconds without consuming gameplay randomness. The compact PCM
   cue is bundled locally and credited in `game/assets/ATTRIBUTION.md`. On collision, the music
   ducks immediately beneath an original descending arcade defeat motif.
+- A 52-second visual weather loop crossfades between clear skies, breeze, rain,
+  storms with lightning, mist, and snow. Weather particles are deterministically
+  seeded, remain cosmetic, and never consume gameplay randomness or alter flight.
+- A separate deterministic scheduler places golden feathers every three to five
+  pipes after the first pickup opportunity. Feathers sit near alternating gap
+  edges, persist in `feathers.txt`, and unlock sunset, sky, and moon bird palettes
+  at totals of 5, 15, and 30. They do not change score or pipe difficulty.
 - The entire LCD is game scenery; there are no letterbox bars or side panels.
 
 ## Supervision and recovery
