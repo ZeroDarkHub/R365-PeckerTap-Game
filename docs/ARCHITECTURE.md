@@ -100,10 +100,11 @@ Sources:
   remain cosmetic, and never consume gameplay randomness or alter flight.
 - A separate deterministic scheduler places golden feathers every three to five
   pipes after the first pickup opportunity. Feathers sit near alternating gap
-  edges, and the lifetime total persists in `feathers.txt`. A separate per-life
-  count selects yellow at 0, pink at 10, blue at 20, green at 30, purple at 40,
-  and black at 50. Black never wraps during the run; death resets only the run
-  count and bird color to yellow. Feathers do not change score or pipe difficulty.
+  edges. One monotonic total persists redundantly in `feathers.txt` and
+  `feathers.backup.txt`; the largest valid copy is loaded. That same total drives
+  the HUD, opening-screen count, and bird color: yellow at 0, pink at 10, blue at
+  20, green at 30, purple at 40, and black at 50. Death and reboot retain both
+  the count and unlocked color. Feathers do not change score or pipe difficulty.
 - The entire LCD is game scenery; there are no letterbox bars or side panels.
 
 ## Supervision and recovery

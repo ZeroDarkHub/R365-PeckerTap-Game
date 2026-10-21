@@ -159,18 +159,41 @@ local function saveScores()
   love.filesystem.write("scores.txt", table.concat(rows, "\n") .. "\n")
 end
 
+local function readFeatherFile(path)
+  if not love.filesystem.getInfo(path) then return nil end
+  -- love.filesystem.read returns both data and byte count. Store the data
+  -- first so tonumber never mistakes that byte count for its optional base.
+  local raw=love.filesystem.read(path)
+  local value=tonumber(raw)
+  if not value then return nil end
+  return math.max(0,math.floor(value))
+end
+
 local function loadFeathers()
-  if not love.filesystem.getInfo("feathers.txt") then return 0 end
-  return math.max(0,math.floor(tonumber(love.filesystem.read("feathers.txt")) or 0))
+  -- The total only ever increases, so the newest valid value is also the
+  -- largest. Keeping two copies prevents a stale or interrupted write from
+  -- rolling an unlocked bird back to an earlier color.
+  return math.max(readFeatherFile("feathers.txt") or 0,
+    readFeatherFile("feathers.backup.txt") or 0)
 end
 
 local function saveFeathers()
-  love.filesystem.write("feathers.txt",tostring(gs.totalFeathers).."\n")
+  local value=tostring(gs.totalFeathers).."\n"
+  local primaryOk,primaryError=love.filesystem.write("feathers.txt",value)
+  local backupOk,backupError=love.filesystem.write("feathers.backup.txt",value)
+  local verified=loadFeathers()
+  if not primaryOk or not backupOk or verified~=gs.totalFeathers then
+    print(string.format("event=feather_save_failed total=%d primary=%s backup=%s verified=%d",
+      gs.totalFeathers,tostring(primaryError or primaryOk),tostring(backupError or backupOk),verified))
+    return false
+  end
+  print(string.format("event=feather_saved total=%d",gs.totalFeathers))
+  return true
 end
 
 local function birdPalette(total)
-  -- Thresholds never wrap during a life. Black remains selected from the
-  -- fiftieth pickup until death starts a fresh yellow run.
+  -- Unlocks are permanent: every ten saved feathers selects the next color,
+  -- and black remains selected from the fiftieth pickup onward.
   local selected=BIRD_PALETTES[1]
   for _,palette in ipairs(BIRD_PALETTES) do
     if total>=palette.need then selected=palette end
@@ -251,11 +274,11 @@ local function weatherAmount(name)
   return amount
 end
 
-local function newState(phase)
+local function newState(phase,featherTotal)
   local hi, board = loadScores()
   return {phase=phase or "splash",frame=0,score=0,hiScore=hi,leaderboard=board,bird=newBird(),pipes={},clouds=newClouds(),stars=newStars(),
     particles={},floatScores={},floatFeathers={},groundX=0,shakeMag=0,shakeX=0,shakeY=0,deathTimer=0,menuBob=0,pipeTimer=0,
-    skyT=0,skyPhase=1,totalFeathers=loadFeathers(),runFeathers=0,nextFeatherIn=2,collectibleState=0x46454154,
+    skyT=0,skyPhase=1,totalFeathers=math.max(loadFeathers(),featherTotal or 0),nextFeatherIn=2,collectibleState=0x46454154,
     weatherClock=0,weatherParticles=newWeatherParticles(),cloudState=0x434c4f55,effectsState=0x45464658}
 end
 
@@ -354,14 +377,13 @@ local function collectFeather(pipe,bird)
   local dx,dy=bird.x-fx,bird.y-fy
   if dx*dx+dy*dy>21*21 then return end
   feather.collected=true
-  gs.runFeathers=gs.runFeathers+1
   gs.totalFeathers=gs.totalFeathers+1
   saveFeathers()
   play("collect")
   gs.shakeMag=math.max(gs.shakeMag,2.8)
   spawnParticles(fx,fy,18,{C.yellow,{1,0.97,0.55},C.white})
   gs.floatFeathers[#gs.floatFeathers+1]={x=fx,y=fy-18,life=1}
-  print(string.format("event=feather_collected run=%d total=%d",gs.runFeathers,gs.totalFeathers))
+  print(string.format("event=feather_collected total=%d",gs.totalFeathers))
 end
 
 local function fixedUpdate()
@@ -654,7 +676,7 @@ local function drawGround()
 end
 
 local function drawBird(b)
-  local palette=birdPalette(gs.runFeathers)
+  local palette=birdPalette(gs.totalFeathers)
   love.graphics.push(); love.graphics.translate(math.floor(b.x),math.floor(b.y)); love.graphics.rotate(math.rad(b.rot)); love.graphics.scale(b.stretch,b.squash)
   color(palette.body2); rounded("fill",-14,-14,28,28,7)
   color(palette.body1); rounded("fill",-12,-12,24,24,6)
@@ -676,11 +698,11 @@ local function drawHUD()
   love.graphics.setColor(0,0,0,0.3); rounded("fill",W/2-32,8,64,36,8)
   text(tostring(gs.score),W/2,26,22,C.white)
   drawFeatherShape(31,26,0.62,-0.12,1)
-  text(tostring(gs.runFeathers),47,26,11,C.yellow,"left",42)
+  text(tostring(gs.totalFeathers),47,26,11,C.yellow,"left",42)
 end
 
 local function drawMenu()
-  local palette=birdPalette(gs.runFeathers)
+  local palette=birdPalette(gs.totalFeathers)
 
   -- The opening screen is arranged as one centered stack, with a dedicated
   -- band for each kind of information so labels stay legible on the 640x480 LCD.
@@ -959,7 +981,12 @@ local function action()
   if elapsed-lastAction<0.075 then return end
   lastAction=elapsed
   if gs.phase=="splash" then gs.phase="menu"; gs.frame=0; return end
-  if gs.phase=="dead" then gs=newState("menu"); return end
+  if gs.phase=="dead" then
+    local total=gs.totalFeathers
+    gs=newState("menu",total)
+    saveFeathers()
+    return
+  end
   if gs.phase=="menu" then gs.phase="ready"; return end
   if gs.phase=="ready" then gs.phase="play" end
   if gs.phase~="play" then return end
@@ -999,8 +1026,7 @@ function love.load()
   if previewScore then gs.score=math.max(0,math.floor(previewScore)) end
   local previewFeathers=tonumber(os.getenv("PECKERTAP_PREVIEW_FEATHERS"))
   if previewFeathers then
-    previewFeathers=math.max(0,math.floor(previewFeathers))
-    gs.totalFeathers,gs.runFeathers=previewFeathers,previewFeathers
+    gs.totalFeathers=math.max(0,math.floor(previewFeathers))
   end
   local previewTotalFeathers=tonumber(os.getenv("PECKERTAP_PREVIEW_TOTAL_FEATHERS"))
   if previewTotalFeathers then gs.totalFeathers=math.max(0,math.floor(previewTotalFeathers)) end

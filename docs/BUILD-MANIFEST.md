@@ -4,10 +4,10 @@ Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `2f53a27672f2dcbe5eede5304c972d86f2f7340e122fc2bca1f7530b0f2d96f0` |
-| `dist/peckertap-r36s-port.zip` | `abbe0cd04efea08386bb80d453c1ed76548dab0296edd20e878e033876a91776` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `9503ab0d3773c829f16526e6236863fb4d4007d28433cb436789783f420087cc` |
-| Packaged `peckertap.love` | `2fe2c08b4c3cc810e3a678f100613f4b5cb5be98e291a09704a793676846f419` |
+| `dist/PeckerTap-R36S.img` | `c0c19faa216f029ee59db3c224cc0dd655a61eea7b64eec6da598b8f80333d56` |
+| `dist/peckertap-r36s-port.zip` | `366c54c006312c6c9abe1821e3598443929b76e1736e44b2ca7513e615a8d03c` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `73c71c199850524223f83224aa98107a2a981eb06bb3ba8dd550cb5f9a792fed` |
+| Packaged `peckertap.love` | `3313213aff05d68f878c66e37a34a85c4f8dd5100e97db011bbae222a07149ed` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -49,10 +49,11 @@ Mac-side verification completed:
 - The in-game feather counter now renders without a background panel, the
   game-over card omits feather totals, and the raised menu count passed
   dedicated 640×480 HUD, menu, and game-over visual checks.
-- Yellow, pink, blue, green, purple, and black passed 640×480 checks at current-life
-  counts 0, 10, 20, 30, 40, and 50. Black stayed selected during the run, while a
-  simulated post-death menu reset the bird to yellow and retained a lifetime total
-  of 99. The HUD displays the current-life count and the menu displays the saved total.
+- Yellow, pink, blue, green, purple, and black remain tied to the single saved
+  totals 0, 10, 20, 30, 40, and 50. A forced 9→10 pickup wrote and verified two
+  save copies, then a separate process relaunched at the opening screen with 10
+  feathers and the pink bird. The parser now isolates LÖVE's data return value so
+  its byte-count return can never be mistaken for `tonumber`'s optional base.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:

@@ -1,5 +1,6 @@
 function love.conf(t)
-  t.identity = "peckertap"
+  -- The override isolates persistence tests; production always uses peckertap.
+  t.identity = os.getenv("PECKERTAP_IDENTITY") or "peckertap"
   t.version = "11.5"
   t.console = true
 

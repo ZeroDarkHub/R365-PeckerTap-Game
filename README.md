@@ -14,9 +14,9 @@ project at `~/Desktop/peckertap` is not modified.
 - A relaxed procedural weather cycle spanning clear skies, breeze, rain, storms,
   and mist without affecting the original flight physics.
 - Risk/reward golden feathers near pipe edges, with a persistent collection
-  total and pickup effects. During each life, bird colors advance every ten
-  feathers through yellow, pink, blue, green, purple, and finally black at 50;
-  death starts the next run in yellow while preserving the lifetime total.
+  total and pickup effects. Bird colors permanently advance every ten saved
+  feathers through yellow, pink, blue, green, purple, and finally black at 50.
+  Both the unlocked color and its feather count remain after death and reboot.
 - The flap, score, occasional real mallard double-quack, collectible sparkle,
   and original descending game-over jingle mixed over the soundtrack.
 - Edge-to-edge 640×480 landscape playfield with the sky, clouds, stars, pipes,
