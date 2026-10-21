@@ -4,10 +4,10 @@ Built on 2026-10-20. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `eaada5aad04ec467f0293182ea137d556ba231c97f23bf3970d53b73d9a51039` |
-| `dist/peckertap-r36s-port.zip` | `4d013985a5e123316adcf576fe1ca3ec723bee661abcde4fb6e8827daa23152d` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `14822eb3d9487c90679eec7597c6fbb5e686054c50c6a3fc0a176e66d0778bc1` |
-| Packaged `peckertap.love` | `12b233486f32506c090eed5cd7648e78d46a4ac54bdc81fcee6c0194cac64105` |
+| `dist/PeckerTap-R36S.img` | `7a2109241b44cf4336e0c1235b8edffa39a8938bd2740f771db9cc74d2b180ce` |
+| `dist/peckertap-r36s-port.zip` | `8f2aef99fa93eae453aebba05d553d2ff9819dd91ecf1e54f78fe00d0eda41e5` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `045b5a5ebabc3f38da8dadd955d122521c02a3a7db57776d873fc4092482cf40` |
+| Packaged `peckertap.love` | `63422b079eaa92889f8dc5b066bb41d82f504ff363bb24060244fe78ee7d500f` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -41,6 +41,9 @@ Mac-side verification completed:
 - Forced feature testing rendered storm/rain and snow at 640×480, exercised the
   score-8 and score-16 music tiers, collected a feather, persisted its total,
   played the pickup sound, and unlocked the five-feather sunset bird palette.
+- The detailed feather vane, barb lines, glow, and multi-axis floating motion
+  passed 640×480 visual inspection; its animated hit position also passed a
+  forced pickup and palette-unlock test.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:

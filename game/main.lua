@@ -331,13 +331,24 @@ local function tickParticles()
   end
 end
 
+local function featherPose(pipe)
+  local feather=pipe.feather
+  local drift=gs.frame*0.052+feather.phase
+  local x=pipe.x+PIPE_WIDTH/2+math.sin(drift)*3.8
+  local y=feather.y+math.sin(gs.frame*0.074+feather.phase)*4.5
+    +math.sin(gs.frame*0.023+feather.phase*1.7)*1.5
+  local angle=-0.08+math.sin(gs.frame*0.043+feather.phase)*0.25
+    +math.sin(gs.frame*0.019+feather.phase*0.7)*0.06
+  local scale=0.98+math.sin(gs.frame*0.061+feather.phase)*0.035
+  return x,y,angle,scale
+end
+
 local function collectFeather(pipe,bird)
   local feather=pipe.feather
   if not feather or feather.collected then return end
-  local fx=pipe.x+PIPE_WIDTH/2
-  local fy=feather.y+math.sin(gs.frame*0.09+feather.phase)*3
+  local fx,fy=featherPose(pipe)
   local dx,dy=bird.x-fx,bird.y-fy
-  if dx*dx+dy*dy>20*20 then return end
+  if dx*dx+dy*dy>21*21 then return end
   feather.collected=true
   gs.runFeathers=gs.runFeathers+1
   gs.totalFeathers=gs.totalFeathers+1
@@ -579,29 +590,65 @@ local function drawPipe(p)
 end
 
 local function drawFeatherShape(x,y,scale,angle,alpha)
+  local a=alpha or 1
   love.graphics.push(); love.graphics.translate(x,y); love.graphics.rotate(angle or 0); love.graphics.scale(scale or 1)
-  love.graphics.setColor(1,0.80,0.12,alpha or 1)
-  love.graphics.polygon("fill",0,-13,7,-8,8,-1,4,8,0,14,-4,8,-8,-1,-6,-8)
-  love.graphics.setColor(1,0.96,0.50,alpha or 1); love.graphics.setLineWidth(1.6)
-  love.graphics.line(0,-10,0,13); love.graphics.line(0,-4,5,-7); love.graphics.line(0,1,6,-2)
-  love.graphics.line(0,5,-5,1); love.graphics.line(0,9,-3,6)
-  love.graphics.setColor(0.72,0.38,0.03,0.7*(alpha or 1)); love.graphics.polygon("line",0,-13,7,-8,8,-1,4,8,0,14,-4,8,-8,-1,-6,-8)
+
+  -- A lightly notched silhouette reads as a real feather even at HUD size.
+  love.graphics.setColor(1,0.75,0.08,a)
+  love.graphics.polygon("fill",
+    0,-17, 4,-14, 7,-11, 6,-8, 9,-6, 7,-3, 10,-1, 7,2,
+    8,5, 5,6, 5,9, 2,10, 0,14,
+    -3,12, -3,9, -7,8, -5,5, -9,3, -6,0, -9,-2, -6,-5,
+    -7,-8, -4,-10, -4,-13)
+  love.graphics.setColor(1,0.91,0.24,0.72*a)
+  love.graphics.polygon("fill",0,-15,4,-13,7,-10,6,-7,8,-5,6,-2,8,0,5,2,6,5,3,6,2,10,-1,12,-0.5,0)
+  love.graphics.setColor(1,0.98,0.62,0.55*a)
+  love.graphics.polygon("fill",-1,-14,2,-12,3,-9,1,-5,-2,-4,-3,-9)
+
+  -- Dark under-stroke plus a warm highlight keeps the curved shaft distinct.
+  love.graphics.setLineWidth(2.6)
+  love.graphics.setColor(0.62,0.30,0.03,0.82*a)
+  love.graphics.line(0,-14,0,-7,-0.3,0,-1,8,-2,18)
+  love.graphics.setLineWidth(1.15)
+  love.graphics.setColor(1,0.95,0.53,a)
+  love.graphics.line(0,-14,0,-7,-0.3,0,-1,8,-2,18)
+
+  -- Fine barbs branch away from the shaft in the alternating pattern found
+  -- on a feather vane. They are deliberately bold enough for the R36S LCD.
+  love.graphics.setLineWidth(1.25)
+  love.graphics.setColor(0.67,0.32,0.03,0.76*a)
+  love.graphics.line(0,-11,4,-13); love.graphics.line(0,-8,6,-10)
+  love.graphics.line(-0.1,-5,7,-7); love.graphics.line(-0.2,-2,8,-4)
+  love.graphics.line(-0.3,1,7,-1); love.graphics.line(-0.6,4,6,3)
+  love.graphics.line(-0.8,7,4,7); love.graphics.line(-1,9,2,10)
+  love.graphics.line(0,-10,-4,-13); love.graphics.line(0,-7,-6,-10)
+  love.graphics.line(-0.1,-4,-7,-7); love.graphics.line(-0.2,-1,-8,-4)
+  love.graphics.line(-0.4,2,-7,0); love.graphics.line(-0.6,5,-7,3)
+  love.graphics.line(-0.8,8,-5,6); love.graphics.line(-1,10,-3,9)
+
+  love.graphics.setLineWidth(1.35)
+  love.graphics.setColor(0.54,0.25,0.02,0.76*a)
+  love.graphics.polygon("line",
+    0,-17, 4,-14, 7,-11, 6,-8, 9,-6, 7,-3, 10,-1, 7,2,
+    8,5, 5,6, 5,9, 2,10, 0,14,
+    -3,12, -3,9, -7,8, -5,5, -9,3, -6,0, -9,-2, -6,-5,
+    -7,-8, -4,-10, -4,-13)
   love.graphics.pop()
 end
 
 local function drawCollectible(pipe)
   if not pipe.feather or pipe.feather.collected then return end
   local feather=pipe.feather
-  local x=pipe.x+PIPE_WIDTH/2
-  local y=feather.y+math.sin(gs.frame*0.09+feather.phase)*3
+  local x,y,angle,featherScale=featherPose(pipe)
   local glow=0.55+0.25*math.sin(gs.frame*0.11+feather.phase)
-  love.graphics.setColor(1,0.85,0.22,0.12+glow*0.12); love.graphics.circle("fill",x,y,19)
+  love.graphics.setColor(1,0.85,0.22,0.11+glow*0.13); love.graphics.circle("fill",x,y,21)
+  love.graphics.setColor(1,0.94,0.42,0.07+glow*0.08); love.graphics.circle("fill",x,y,27)
   for i=0,3 do
-    local a=gs.frame*0.025+feather.phase+i*math.pi/2
+    local a=gs.frame*0.021+feather.phase+i*math.pi/2
     love.graphics.setColor(1,0.95,0.55,0.42)
-    love.graphics.circle("fill",x+math.cos(a)*16,y+math.sin(a)*12,1.4)
+    love.graphics.circle("fill",x+math.cos(a)*19,y+math.sin(a)*14,1.35)
   end
-  drawFeatherShape(x,y,0.82,math.sin(gs.frame*0.045+feather.phase)*0.18,1)
+  drawFeatherShape(x,y,0.94*featherScale,angle,1)
 end
 
 local function drawGround()
@@ -658,7 +705,9 @@ local function drawMenu()
   text("HIGH SCORE",statsX+statsW*0.25,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
   text(tostring(gs.hiScore),statsX+statsW*0.25,statsY+50,23,C.yellow,"center",statsW/2-20)
   text("FEATHERS",statsX+statsW*0.75,statsY+17,9,{0.82,0.88,0.96},"center",statsW/2-20)
-  drawFeatherShape(statsX+statsW*0.66,statsY+45,0.58,-0.14,1)
+  local menuFeatherBob=math.sin(gs.frame*0.065)*1.4
+  local menuFeatherTilt=-0.12+math.sin(gs.frame*0.045)*0.07
+  drawFeatherShape(statsX+statsW*0.66,statsY+45+menuFeatherBob,0.64,menuFeatherTilt,1)
   text(tostring(gs.totalFeathers),statsX+statsW*0.75+13,statsY+44,18,C.yellow,"center",76)
   text(palette.name.." BIRD",statsX+statsW*0.75,statsY+65,7,{1,0.74,0.34,0.88},"center",statsW/2-16)
 
