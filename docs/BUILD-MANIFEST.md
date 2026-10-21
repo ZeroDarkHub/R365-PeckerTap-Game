@@ -4,10 +4,10 @@ Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `241f64fc9d2dd45c66bb92ea8be5052e63feeea2f5b4560fdacbbc282a8d886a` |
-| `dist/peckertap-r36s-port.zip` | `68d72114f3fc760534754e37a5b8e22c8fd6f6d3bca5c888f976dd6dd257c081` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `15d67ca0263c24667bd3eed2d62e7d597a98a80b75813ef85dcc32bf6a2831fd` |
-| Packaged `peckertap.love` | `277dac940c4ed0a730ffa6ce35e69e28df0cdf39d50834bbf4035edd2cfa434e` |
+| `dist/PeckerTap-R36S.img` | `2f53a27672f2dcbe5eede5304c972d86f2f7340e122fc2bca1f7530b0f2d96f0` |
+| `dist/peckertap-r36s-port.zip` | `abbe0cd04efea08386bb80d453c1ed76548dab0296edd20e878e033876a91776` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `9503ab0d3773c829f16526e6236863fb4d4007d28433cb436789783f420087cc` |
+| Packaged `peckertap.love` | `2fe2c08b4c3cc810e3a678f100613f4b5cb5be98e291a09704a793676846f419` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -49,9 +49,10 @@ Mac-side verification completed:
 - The in-game feather counter now renders without a background panel, the
   game-over card omits feather totals, and the raised menu count passed
   dedicated 640×480 HUD, menu, and game-over visual checks.
-- Yellow, pink, blue, green, purple, and black passed 640×480 checks at totals
-  0, 10, 20, 30, 40, and 50. A 99-feather preview remained black, confirming
-  the final palette cannot wrap, and the HUD displayed the same saved total.
+- Yellow, pink, blue, green, purple, and black passed 640×480 checks at current-life
+  counts 0, 10, 20, 30, 40, and 50. Black stayed selected during the run, while a
+  simulated post-death menu reset the bird to yellow and retained a lifetime total
+  of 99. The HUD displays the current-life count and the menu displays the saved total.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:
