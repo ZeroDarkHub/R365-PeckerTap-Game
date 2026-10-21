@@ -671,7 +671,6 @@ end
 local function drawHUD()
   love.graphics.setColor(0,0,0,0.3); rounded("fill",W/2-32,8,64,36,8)
   text(tostring(gs.score),W/2,26,22,C.white)
-  love.graphics.setColor(0,0,0,0.28); rounded("fill",14,10,70,32,8)
   drawFeatherShape(31,26,0.62,-0.12,1)
   text(tostring(gs.runFeathers),47,26,11,C.yellow,"left",28)
 end
@@ -694,7 +693,7 @@ local function drawMenu()
   text("HIGH SCORE",statsX+statsW*0.25,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
   text(tostring(gs.hiScore),statsX+statsW*0.25,statsY+50,23,C.yellow,"center",statsW/2-20)
   text("FEATHERS",statsX+statsW*0.75,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
-  text(tostring(gs.totalFeathers),statsX+statsW*0.75,statsY+50,23,C.yellow,"center",statsW/2-20)
+  text(tostring(gs.totalFeathers),statsX+statsW*0.75,statsY+45,23,C.yellow,"center",statsW/2-20)
   text(palette.name.." BIRD",statsX+statsW*0.75,statsY+65,7,{1,0.74,0.34,0.88},"center",statsW/2-16)
 
   local pulse=0.7+(0.5+0.5*math.sin(gs.frame*0.1))*0.3
@@ -729,19 +728,18 @@ end
 
 local function drawDead()
   if gs.phase=="dying" and gs.deathTimer<=20 then return end
-  local py=H*0.2
+  local py,panelH=H*0.2,176
   love.graphics.setColor(0,0,0,0.5); love.graphics.rectangle("fill",0,0,W,H)
-  color(C.panel); rounded("fill",W/2-100,py,200,200,14)
-  color(C.yellow); love.graphics.setLineWidth(2.5); rounded("line",W/2-100,py,200,200,14)
+  color(C.panel); rounded("fill",W/2-100,py,200,panelH,14)
+  color(C.yellow); love.graphics.setLineWidth(2.5); rounded("line",W/2-100,py,200,panelH,14)
   text("GAME OVER",W/2,py+30,BASE_W*0.052,C.red)
   love.graphics.setColor(1,1,1,0.07); love.graphics.rectangle("fill",W/2-80,py+48,160,1)
   text("SCORE",W/2-46,py+64,BASE_W*0.024,{0.6,0.6,0.6}); text("BEST",W/2+50,py+64,BASE_W*0.024,{0.6,0.6,0.6})
   text(tostring(gs.score),W/2-46,py+92,24,C.white); text(tostring(gs.hiScore),W/2+50,py+92,24,gs.score>0 and gs.score>=gs.hiScore and C.yellow or C.white)
   if gs.score>0 and gs.score>=gs.hiScore then text("NEW!",W/2+50,py+110,BASE_W*0.022,C.yellow) end
-  text("FEATHERS +"..gs.runFeathers.."  TOTAL "..gs.totalFeathers,W/2,py+128,BASE_W*0.019,{1,0.90,0.35})
   if gs.phase=="dead" then
-    color(C.green,0.82+0.18*math.sin(gs.frame*0.13)); rounded("fill",W/2-70,py+148,140,40,10)
-    color(C.greenBorder); love.graphics.setLineWidth(2); rounded("line",W/2-70,py+148,140,40,10); text("PLAY AGAIN",W/2,py+168,BASE_W*0.032,C.white)
+    color(C.green,0.82+0.18*math.sin(gs.frame*0.13)); rounded("fill",W/2-70,py+126,140,40,10)
+    color(C.greenBorder); love.graphics.setLineWidth(2); rounded("line",W/2-70,py+126,140,40,10); text("PLAY AGAIN",W/2,py+146,BASE_W*0.032,C.white)
   end
 end
 

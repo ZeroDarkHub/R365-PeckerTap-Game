@@ -4,10 +4,10 @@ Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `060489b31921d6b682c21c753ca58e98c05c3e3216d331238209c983b5e567e8` |
-| `dist/peckertap-r36s-port.zip` | `6c09be0aa756e58ab7abff70f35ba92374af69188f777543d93eca258ff56403` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `e979ffaa5d22c9a527c0304c557399cde5b92b2e402c2397b3051fc5c89628f6` |
-| Packaged `peckertap.love` | `732f65a0e429db9b948a9847976be64a7e2dc442e90ce83b56e536b8f411f0f0` |
+| `dist/PeckerTap-R36S.img` | `234ce8585dd6a9e39751652552d747e211ee7b9f5d31509600617d632a8548a4` |
+| `dist/peckertap-r36s-port.zip` | `c57aee2e15f8aa0be5bc4d0e7cb9c5a7e56e65038c1c441ff8ee0418f198eec9` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `a03b2d4e467efd5129fe2383258d23657529efca9b6080605fdad72e26238065` |
+| Packaged `peckertap.love` | `9297dcee2d9f778490dac5a5cbb9797d15dc977cf5ad9ecb3105f39499a104a8` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -46,6 +46,9 @@ Mac-side verification completed:
 - The opening feather total is now text-only and centered, and the 115-second
   clear/breeze/rain/storm/mist schedule passed source and preview verification;
   the removed snow override falls back to clear weather.
+- The in-game feather counter now renders without a background panel, the
+  game-over card omits feather totals, and the raised menu count passed
+  dedicated 640×480 HUD, menu, and game-over visual checks.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:
