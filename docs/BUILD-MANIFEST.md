@@ -4,10 +4,10 @@ Built on 2026-10-20. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `9544def516e59ec54fae7b5f1352d9db2cae449d731a8fcee7ed030143e4a68d` |
-| `dist/peckertap-r36s-port.zip` | `cdff5b8f4803cf5dfb73bddba4ee2b32e89896782882d591a4ba46912a652d27` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `47a7c5aeadaeb4175872de9df8191e38f5293d04c619b028406cec261c3ff7ce` |
-| Packaged `peckertap.love` | `4fa912d2d7a4bdda417f358404370bb90d25f03231cadc305d3aec21ed0fe697` |
+| `dist/PeckerTap-R36S.img` | `eaada5aad04ec467f0293182ea137d556ba231c97f23bf3970d53b73d9a51039` |
+| `dist/peckertap-r36s-port.zip` | `4d013985a5e123316adcf576fe1ca3ec723bee661abcde4fb6e8827daa23152d` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `14822eb3d9487c90679eec7597c6fbb5e686054c50c6a3fc0a176e66d0778bc1` |
+| Packaged `peckertap.love` | `12b233486f32506c090eed5cd7648e78d46a4ac54bdc81fcee6c0194cac64105` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -30,6 +30,8 @@ Mac-side verification completed:
   and ARM runtime checks passed `scripts/verify.sh`.
 - Edge-to-edge day and night 640×480 renders passed visual inspection using
   official LÖVE 11.5; neither render contains side bars.
+- The redesigned boot splash and opening menu passed visual inspection at
+  640×480, including the enlarged title and separated score/feather panels.
 - The packaged `main.lua` is byte-identical to the verified 720×540 landscape
   source, and both nested ZIP archives passed integrity tests.
 - The original “Skybound Peck” procedural soundtrack initializes successfully

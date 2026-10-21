@@ -144,7 +144,7 @@ local function loadScores()
       local n = tonumber(line)
       if n then
         if first then hi = math.max(0, math.floor(n)); first = false
-        elseif #board < 5 then board[#board+1] = math.max(0, math.floor(n)) end
+        elseif #board < 5 and n > 0 then board[#board+1] = math.floor(n) end
       end
     end
   end
@@ -315,9 +315,11 @@ local function triggerDeath()
   end
   gs.phase, gs.deathTimer, gs.shakeMag = "dying", 0, 11
   spawnParticles(gs.bird.x, gs.bird.y, 14)
-  gs.leaderboard[#gs.leaderboard+1] = gs.score
-  table.sort(gs.leaderboard, function(a,b) return a>b end)
-  while #gs.leaderboard > 5 do table.remove(gs.leaderboard) end
+  if gs.score>0 then
+    gs.leaderboard[#gs.leaderboard+1] = gs.score
+    table.sort(gs.leaderboard, function(a,b) return a>b end)
+    while #gs.leaderboard > 5 do table.remove(gs.leaderboard) end
+  end
   saveScores()
   print(string.format("event=game_over score=%d best=%d", gs.score, gs.hiScore))
 end
@@ -365,8 +367,13 @@ local function fixedUpdate()
   end
   local groundSpeed=(gs.phase=="play" or gs.phase=="dying") and pipeSpeed(gs.score) or 0.5
   gs.groundX=(gs.groundX-groundSpeed)%40
-  if gs.phase=="menu" or gs.phase=="ready" then
-    gs.bird.y=H/2+gs.menuBob; gs.bird.rot=0; gs.bird.wingFrame=wingFrame(gs.frame); return
+  if gs.phase=="menu" then
+    gs.bird.x=W/2; gs.bird.y=288+gs.menuBob; gs.bird.vy=0
+    gs.bird.rot=0; gs.bird.wingFrame=wingFrame(gs.frame); return
+  end
+  if gs.phase=="ready" then
+    gs.bird.x=W/2-BASE_W/2+BASE_W*0.22; gs.bird.y=H/2+gs.menuBob; gs.bird.vy=0
+    gs.bird.rot=0; gs.bird.wingFrame=wingFrame(gs.frame); return
   end
   if gs.phase=="dying" then
     gs.deathTimer=gs.deathTimer+1; gs.bird.vy=gs.bird.vy+0.46*1.6; gs.bird.y=gs.bird.y+gs.bird.vy
@@ -634,34 +641,50 @@ local function drawHUD()
 end
 
 local function drawMenu()
-  text("PECKER",W/2,H*0.07+24,BASE_W*0.068,C.yellow)
-  text("TAP",W/2,H*0.07+52,BASE_W*0.068,C.orange)
-  if gs.hiScore>0 then
-    text("BEST",W/2,H*0.25+12,BASE_W*0.032,{0.8,0.8,0.8})
-    text(tostring(gs.hiScore),W/2,H*0.25+26,BASE_W*0.042,C.yellow)
-  end
   local palette=birdPalette(gs.totalFeathers)
-  text("FEATHERS "..gs.totalFeathers.."  "..palette.name,W/2,H*0.315,BASE_W*0.022,{1,0.91,0.42})
+
+  -- The opening screen is arranged as one centered stack, with a dedicated
+  -- band for each kind of information so labels stay legible on the 640x480 LCD.
+  local titleX,titleY,titleW,titleH=W/2-231,20,462,88
+  love.graphics.setColor(0.02,0.04,0.10,0.82); rounded("fill",titleX,titleY,titleW,titleH,14)
+  love.graphics.setColor(1,0.851,0.239,0.42); love.graphics.setLineWidth(2); rounded("line",titleX,titleY,titleW,titleH,14)
+  text("PECKER TAP",W/2,titleY+36,36,C.yellow,"center",titleW-24)
+  text("SKYBOUND ARCADE",W/2,titleY+70,9,{1,0.78,0.29,0.9},"center",titleW-24)
+
+  local statsX,statsY,statsW,statsH=W/2-158,120,316,76
+  love.graphics.setColor(0.02,0.04,0.10,0.76); rounded("fill",statsX,statsY,statsW,statsH,12)
+  love.graphics.setColor(1,1,1,0.10); love.graphics.setLineWidth(1); rounded("line",statsX,statsY,statsW,statsH,12)
+  love.graphics.setColor(1,1,1,0.12); love.graphics.rectangle("fill",W/2,statsY+11,1,statsH-22)
+  text("HIGH SCORE",statsX+statsW*0.25,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
+  text(tostring(gs.hiScore),statsX+statsW*0.25,statsY+50,23,C.yellow,"center",statsW/2-20)
+  text("FEATHERS",statsX+statsW*0.75,statsY+17,9,{0.82,0.88,0.96},"center",statsW/2-20)
+  drawFeatherShape(statsX+statsW*0.66,statsY+45,0.58,-0.14,1)
+  text(tostring(gs.totalFeathers),statsX+statsW*0.75+13,statsY+44,18,C.yellow,"center",76)
+  text(palette.name.." BIRD",statsX+statsW*0.75,statsY+65,7,{1,0.74,0.34,0.88},"center",statsW/2-16)
+
   local pulse=0.7+(0.5+0.5*math.sin(gs.frame*0.1))*0.3
-  love.graphics.setColor(0,0,0,0.4*pulse); rounded("fill",W/2-88,H*0.38,176,38,9)
-  text("TAP TO START",W/2,H*0.38+19,BASE_W*0.036,{1,1,1,pulse})
-  local rows=math.max(1,math.min(#gs.leaderboard,5)); local rowH=18
-  local panelH=32+rows*rowH+6; local panelY=H*0.52; local panelW=math.min(W-28,180); local panelX=W/2-panelW/2
-  love.graphics.setColor(0,0,0,0.45); rounded("fill",panelX,panelY,panelW,panelH,10)
-  love.graphics.setColor(1,0.851,0.239,0.25); love.graphics.setLineWidth(1); rounded("line",panelX,panelY,panelW,panelH,10)
-  text("TOP SCORES",W/2,panelY+16,BASE_W*0.028,C.yellow)
-  love.graphics.setColor(1,1,1,0.08); love.graphics.rectangle("fill",panelX+12,panelY+28,panelW-24,1)
+  local buttonX,buttonY,buttonW,buttonH=W/2-112,210,224,50
+  love.graphics.setColor(0.05,0.22,0.10,0.82); rounded("fill",buttonX,buttonY,buttonW,buttonH,11)
+  love.graphics.setColor(0.55,1,0.32,0.54+0.30*pulse); love.graphics.setLineWidth(2); rounded("line",buttonX,buttonY,buttonW,buttonH,11)
+  text("TAP TO START",W/2,buttonY+buttonH/2,16,{1,1,1,pulse},"center",buttonW-18)
+
+  local rows=math.max(1,math.min(#gs.leaderboard,5)); local rowH=19
+  local panelH=38+rows*rowH+6; local panelY=326; local panelW=250; local panelX=W/2-panelW/2
+  love.graphics.setColor(0.02,0.04,0.10,0.68); rounded("fill",panelX,panelY,panelW,panelH,11)
+  love.graphics.setColor(1,0.851,0.239,0.30); love.graphics.setLineWidth(1); rounded("line",panelX,panelY,panelW,panelH,11)
+  text("TOP SCORES",W/2,panelY+18,11,C.yellow,"center",panelW-24)
+  love.graphics.setColor(1,1,1,0.10); love.graphics.rectangle("fill",panelX+14,panelY+34,panelW-28,1)
   if #gs.leaderboard>0 then
     local medals={C.yellow,{0.75,0.75,0.75},{0.80,0.50,0.20},{0.67,0.67,0.67},{0.67,0.67,0.67}}
     for i=1,math.min(#gs.leaderboard,5) do
-      local ry=panelY+32+(i-1)*rowH+rowH/2-2
-      text("#"..i,panelX+18,ry,BASE_W*0.025,medals[i],"center",36)
-      text(tostring(gs.leaderboard[i]),panelX+panelW-52,ry,BASE_W*0.025,C.white,"right",44)
+      local ry=panelY+39+(i-1)*rowH+rowH/2-1
+      text("#"..i,panelX+22,ry,9,medals[i],"left",56)
+      text(tostring(gs.leaderboard[i]),panelX+panelW-82,ry,10,C.white,"right",60)
     end
   elseif gs.hiScore>0 then
-    text("BEST  "..gs.hiScore,W/2,panelY+38+rowH/2-2,BASE_W*0.03,C.yellow)
+    text("BEST  "..gs.hiScore,W/2,panelY+48,10,C.yellow,"center",panelW-28)
   else
-    text("NO SCORES YET",W/2,panelY+38+rowH/2-2,BASE_W*0.022,{1,1,1,0.4})
+    text("NO SCORES YET",W/2,panelY+48,8,{1,1,1,0.52},"center",panelW-28)
   end
 end
 
@@ -713,11 +736,14 @@ end
 
 local function drawSplash()
   drawOuterBackground(); local pulse=0.82+0.18*math.sin(gs.frame*0.08)
-  color(C.birdBody1); rounded("fill",SCREEN_W/2-45,105,90,90,18); color(C.birdBody2); love.graphics.setLineWidth(7); rounded("line",SCREEN_W/2-45,105,90,90,18)
-  color(C.white); love.graphics.circle("fill",SCREEN_W/2+18,137,16); color(C.eye); love.graphics.circle("fill",SCREEN_W/2+21,138,9); color(C.white); love.graphics.circle("fill",SCREEN_W/2+24,134,3)
-  color(C.birdBeak); love.graphics.polygon("fill",SCREEN_W/2+42,145,SCREEN_W/2+76,157,SCREEN_W/2+42,168)
-  text("PECKER TAP",SCREEN_W/2,260,24,C.yellow,"center",520); color(C.white,pulse); text("R36S EDITION",SCREEN_W/2,305,10,{0.75,0.85,1},"center",400)
-  text("OFFLINE ARCADE",SCREEN_W/2,390,8,{0.45,0.9,0.6},"center",360)
+  love.graphics.setColor(1,0.851,0.239,0.10); rounded("fill",SCREEN_W/2-245,62,490,350,22)
+  love.graphics.setColor(1,0.851,0.239,0.25); love.graphics.setLineWidth(2); rounded("line",SCREEN_W/2-245,62,490,350,22)
+  color(C.birdBody1); rounded("fill",SCREEN_W/2-45,104,90,90,18); color(C.birdBody2); love.graphics.setLineWidth(7); rounded("line",SCREEN_W/2-45,104,90,90,18)
+  color(C.white); love.graphics.circle("fill",SCREEN_W/2+18,136,16); color(C.eye); love.graphics.circle("fill",SCREEN_W/2+21,137,9); color(C.white); love.graphics.circle("fill",SCREEN_W/2+24,133,3)
+  color(C.birdBeak); love.graphics.polygon("fill",SCREEN_W/2+42,144,SCREEN_W/2+76,156,SCREEN_W/2+42,167)
+  text("PECKER TAP",SCREEN_W/2,256,34,C.yellow,"center",540)
+  color(C.white,pulse); text("R36S EDITION",SCREEN_W/2,312,11,{0.75,0.85,1},"center",420)
+  text("SKYBOUND ARCADE",SCREEN_W/2,374,9,{0.45,0.9,0.6},"center",400)
 end
 
 local function makeTone(duration, parts)
