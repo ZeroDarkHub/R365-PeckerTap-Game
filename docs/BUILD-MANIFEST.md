@@ -4,10 +4,10 @@ Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `234ce8585dd6a9e39751652552d747e211ee7b9f5d31509600617d632a8548a4` |
-| `dist/peckertap-r36s-port.zip` | `c57aee2e15f8aa0be5bc4d0e7cb9c5a7e56e65038c1c441ff8ee0418f198eec9` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `a03b2d4e467efd5129fe2383258d23657529efca9b6080605fdad72e26238065` |
-| Packaged `peckertap.love` | `9297dcee2d9f778490dac5a5cbb9797d15dc977cf5ad9ecb3105f39499a104a8` |
+| `dist/PeckerTap-R36S.img` | `241f64fc9d2dd45c66bb92ea8be5052e63feeea2f5b4560fdacbbc282a8d886a` |
+| `dist/peckertap-r36s-port.zip` | `68d72114f3fc760534754e37a5b8e22c8fd6f6d3bca5c888f976dd6dd257c081` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `15d67ca0263c24667bd3eed2d62e7d597a98a80b75813ef85dcc32bf6a2831fd` |
+| Packaged `peckertap.love` | `277dac940c4ed0a730ffa6ce35e69e28df0cdf39d50834bbf4035edd2cfa434e` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -39,7 +39,7 @@ Mac-side verification completed:
   exercising the real mallard double-quack and original descending defeat-jingle paths.
 - Forced feature testing rendered storm/rain and mist at 640×480, exercised the
   score-8 and score-16 music tiers, collected a feather, persisted its total,
-  played the pickup sound, and unlocked the five-feather sunset bird palette.
+  played the pickup sound, and changed the bird from yellow to pink at 10.
 - The detailed feather vane, barb lines, glow, and multi-axis floating motion
   passed 640×480 visual inspection; its animated hit position also passed a
   forced pickup and palette-unlock test.
@@ -49,6 +49,9 @@ Mac-side verification completed:
 - The in-game feather counter now renders without a background panel, the
   game-over card omits feather totals, and the raised menu count passed
   dedicated 640×480 HUD, menu, and game-over visual checks.
+- Yellow, pink, blue, green, purple, and black passed 640×480 checks at totals
+  0, 10, 20, 30, 40, and 50. A 99-feather preview remained black, confirming
+  the final palette cannot wrap, and the HUD displayed the same saved total.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:

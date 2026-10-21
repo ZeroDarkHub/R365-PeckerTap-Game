@@ -37,10 +37,12 @@ local C = {
 }
 
 local BIRD_PALETTES = {
-  {need=0,name="GOLD",body1=C.birdBody1,body2=C.birdBody2,wing=C.birdWing},
-  {need=5,name="SUNSET",body1={1,0.55,0.58},body2={0.90,0.22,0.34},wing={1,0.36,0.24}},
-  {need=15,name="SKY",body1={0.32,0.94,0.88},body2={0.08,0.58,0.72},wing={0.10,0.74,0.60}},
-  {need=30,name="MOON",body1={0.78,0.72,1},body2={0.45,0.33,0.82},wing={0.60,0.44,0.94}}
+  {need=0,name="YELLOW",body1=C.birdBody1,body2=C.birdBody2,wing=C.birdWing},
+  {need=10,name="PINK",body1={1,0.57,0.72},body2={0.92,0.24,0.52},wing={1,0.38,0.60}},
+  {need=20,name="BLUE",body1={0.36,0.78,1},body2={0.10,0.40,0.85},wing={0.16,0.58,1}},
+  {need=30,name="GREEN",body1={0.48,0.91,0.36},body2={0.12,0.56,0.25},wing={0.22,0.72,0.30}},
+  {need=40,name="PURPLE",body1={0.74,0.58,1},body2={0.38,0.20,0.72},wing={0.55,0.33,0.88}},
+  {need=50,name="BLACK",body1={0.18,0.20,0.24},body2={0.035,0.045,0.06},wing={0.30,0.32,0.38}}
 }
 
 -- The complete loop is 115 seconds. Longer phases and three-second crossfades
@@ -167,6 +169,8 @@ local function saveFeathers()
 end
 
 local function birdPalette(total)
+  -- Thresholds never wrap: once the persistent total reaches black, black
+  -- remains selected until feathers.txt is reset.
   local selected=BIRD_PALETTES[1]
   for _,palette in ipairs(BIRD_PALETTES) do
     if total>=palette.need then selected=palette end
@@ -251,7 +255,7 @@ local function newState(phase)
   local hi, board = loadScores()
   return {phase=phase or "splash",frame=0,score=0,hiScore=hi,leaderboard=board,bird=newBird(),pipes={},clouds=newClouds(),stars=newStars(),
     particles={},floatScores={},floatFeathers={},groundX=0,shakeMag=0,shakeX=0,shakeY=0,deathTimer=0,menuBob=0,pipeTimer=0,
-    skyT=0,skyPhase=1,totalFeathers=loadFeathers(),runFeathers=0,nextFeatherIn=2,collectibleState=0x46454154,
+    skyT=0,skyPhase=1,totalFeathers=loadFeathers(),nextFeatherIn=2,collectibleState=0x46454154,
     weatherClock=0,weatherParticles=newWeatherParticles(),cloudState=0x434c4f55,effectsState=0x45464658}
 end
 
@@ -350,14 +354,13 @@ local function collectFeather(pipe,bird)
   local dx,dy=bird.x-fx,bird.y-fy
   if dx*dx+dy*dy>21*21 then return end
   feather.collected=true
-  gs.runFeathers=gs.runFeathers+1
   gs.totalFeathers=gs.totalFeathers+1
   saveFeathers()
   play("collect")
   gs.shakeMag=math.max(gs.shakeMag,2.8)
   spawnParticles(fx,fy,18,{C.yellow,{1,0.97,0.55},C.white})
   gs.floatFeathers[#gs.floatFeathers+1]={x=fx,y=fy-18,life=1}
-  print(string.format("event=feather_collected run=%d total=%d",gs.runFeathers,gs.totalFeathers))
+  print(string.format("event=feather_collected total=%d",gs.totalFeathers))
 end
 
 local function fixedUpdate()
@@ -672,7 +675,7 @@ local function drawHUD()
   love.graphics.setColor(0,0,0,0.3); rounded("fill",W/2-32,8,64,36,8)
   text(tostring(gs.score),W/2,26,22,C.white)
   drawFeatherShape(31,26,0.62,-0.12,1)
-  text(tostring(gs.runFeathers),47,26,11,C.yellow,"left",28)
+  text(tostring(gs.totalFeathers),47,26,11,C.yellow,"left",42)
 end
 
 local function drawMenu()

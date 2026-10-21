@@ -15,7 +15,8 @@ Do not mark a test passed without observing it on the handheld.
    longer phases and smooth three-second transitions.
 9. Golden feathers appear near pipe-gap edges and can be collected.
 10. Best score and feather total persist across a reboot.
-11. Bird colors unlock at 5, 15, and 30 total feathers.
+11. The HUD shows the persistent feather total; bird colors switch to pink at
+    10, blue at 20, green at 30, purple at 40, and black at 50, then stay black.
 12. Five intentional crash tests do not create an endless restart loop.
 13. Hold Select + Start for two seconds and verify clean shutdown.
 14. Create the BOOT recovery marker and verify the game is skipped.

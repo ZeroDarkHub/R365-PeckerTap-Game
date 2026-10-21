@@ -100,8 +100,9 @@ Sources:
   remain cosmetic, and never consume gameplay randomness or alter flight.
 - A separate deterministic scheduler places golden feathers every three to five
   pipes after the first pickup opportunity. Feathers sit near alternating gap
-  edges, persist in `feathers.txt`, and unlock sunset, sky, and moon bird palettes
-  at totals of 5, 15, and 30. They do not change score or pipe difficulty.
+  edges and persist in `feathers.txt`. The saved total selects yellow at 0, pink
+  at 10, blue at 20, green at 30, purple at 40, and black at 50; the final black
+  palette never wraps. Feathers do not change score or pipe difficulty.
 - The entire LCD is game scenery; there are no letterbox bars or side panels.
 
 ## Supervision and recovery
