@@ -1,18 +1,17 @@
 # Build manifest
 
-Built on 2026-10-20. These hashes identify the currently prepared artifacts.
+Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `7a2109241b44cf4336e0c1235b8edffa39a8938bd2740f771db9cc74d2b180ce` |
-| `dist/peckertap-r36s-port.zip` | `8f2aef99fa93eae453aebba05d553d2ff9819dd91ecf1e54f78fe00d0eda41e5` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `045b5a5ebabc3f38da8dadd955d122521c02a3a7db57776d873fc4092482cf40` |
-| Packaged `peckertap.love` | `63422b079eaa92889f8dc5b066bb41d82f504ff363bb24060244fe78ee7d500f` |
+| `dist/PeckerTap-R36S.img` | `060489b31921d6b682c21c753ca58e98c05c3e3216d331238209c983b5e567e8` |
+| `dist/peckertap-r36s-port.zip` | `6c09be0aa756e58ab7abff70f35ba92374af69188f777543d93eca258ff56403` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `e979ffaa5d22c9a527c0304c557399cde5b92b2e402c2397b3051fc5c89628f6` |
+| Packaged `peckertap.love` | `732f65a0e429db9b948a9847976be64a7e2dc442e90ce83b56e536b8f411f0f0` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
 | `dist/peckertap-r36s-storm-feather.png` | `64197d1ec0dae093b6e95091accdc6da77344992afd757cd6b7210c22efcebe0` |
-| `dist/peckertap-r36s-snow-pickup.png` | `b87b194fce8c8aee88ff8655200539643de38b5d22075b4723b97b490a23cf8b` |
 | ArkOS compressed base | `55721f501bc6f01043d51c217ffecbd3db203c9bbb33712568dad6ba9c4a5473` |
 | ArkOS expanded base | `c3909660e8461a38be20e7baa9b7ef450de5c7d676b3e69efd253a357a8786d6` |
 
@@ -38,12 +37,15 @@ Mac-side verification completed:
   in the official LÖVE 11.5 runtime and begins with the boot splash.
 - Forced audio-event testing reached both `event=quack` and `event=game_over`,
   exercising the real mallard double-quack and original descending defeat-jingle paths.
-- Forced feature testing rendered storm/rain and snow at 640×480, exercised the
+- Forced feature testing rendered storm/rain and mist at 640×480, exercised the
   score-8 and score-16 music tiers, collected a feather, persisted its total,
   played the pickup sound, and unlocked the five-feather sunset bird palette.
 - The detailed feather vane, barb lines, glow, and multi-axis floating motion
   passed 640×480 visual inspection; its animated hit position also passed a
   forced pickup and palette-unlock test.
+- The opening feather total is now text-only and centered, and the 115-second
+  clear/breeze/rain/storm/mist schedule passed source and preview verification;
+  the removed snow override falls back to clear weather.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:

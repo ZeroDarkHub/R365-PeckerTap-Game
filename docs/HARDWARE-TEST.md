@@ -11,7 +11,8 @@ Do not mark a test passed without observing it on the handheld.
 5. Flap-to-motion latency feels immediate and frame pacing stays consistent.
 6. Flap, score, real quack, feather pickup, collision, and defeat sounds play cleanly.
 7. The soundtrack gains energy at scores 3, 8, and 16, then softens at night and in storms.
-8. Clear, breeze, rain, storm/lightning, mist, and snow transitions stay readable.
+8. Clear, breeze, rain, storm/lightning, and mist remain readable through their
+   longer phases and smooth three-second transitions.
 9. Golden feathers appear near pipe-gap edges and can be collected.
 10. Best score and feather total persist across a reboot.
 11. Bird colors unlock at 5, 15, and 30 total feathers.

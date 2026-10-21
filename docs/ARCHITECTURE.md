@@ -95,9 +95,9 @@ Sources:
   every 10–22 seconds without consuming gameplay randomness. The compact PCM
   cue is bundled locally and credited in `game/assets/ATTRIBUTION.md`. On collision, the music
   ducks immediately beneath an original descending arcade defeat motif.
-- A 52-second visual weather loop crossfades between clear skies, breeze, rain,
-  storms with lightning, mist, and snow. Weather particles are deterministically
-  seeded, remain cosmetic, and never consume gameplay randomness or alter flight.
+- A 115-second visual weather loop crossfades between clear skies, breeze, rain,
+  storms with lightning, and mist. Weather particles are deterministically seeded,
+  remain cosmetic, and never consume gameplay randomness or alter flight.
 - A separate deterministic scheduler places golden feathers every three to five
   pipes after the first pickup opportunity. Feathers sit near alternating gap
   edges, persist in `feathers.txt`, and unlock sunset, sky, and moon bird palettes

@@ -11,8 +11,8 @@ project at `~/Desktop/peckertap` is not modified.
 - The original “Skybound Peck” 8-bit soundtrack, synthesized locally at boot as
   three synchronized layers. Its arrangement builds with the score and softens
   naturally at night and during rain or storms.
-- A smooth procedural weather cycle spanning clear skies, breeze, rain, storms,
-  mist, and snow without affecting the original flight physics.
+- A relaxed procedural weather cycle spanning clear skies, breeze, rain, storms,
+  and mist without affecting the original flight physics.
 - Risk/reward golden feathers near pipe edges, with a persistent collection
   total, pickup effects, and new bird palettes unlocked at 5, 15, and 30.
 - The flap, score, occasional real mallard double-quack, collectible sparkle,
@@ -31,9 +31,9 @@ Normal boot is:
 
 ## Feature preview
 
-| Storm collectible | Snow pickup and palette unlock |
+| Storm collectible | Night sky |
 |---|---|
-| ![Storm, layered rain, and a golden feather](dist/peckertap-r36s-storm-feather.png) | ![Snow, feather pickup particles, and the sunset bird](dist/peckertap-r36s-snow-pickup.png) |
+| ![Storm, layered rain, and a golden feather](dist/peckertap-r36s-storm-feather.png) | ![Night sky and stars](dist/peckertap-r36s-night.png) |
 
 There is no browser, Electron, X11 desktop, login prompt, or launcher in the
 normal path.

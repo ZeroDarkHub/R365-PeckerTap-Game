@@ -43,16 +43,16 @@ local BIRD_PALETTES = {
   {need=30,name="MOON",body1={0.78,0.72,1},body2={0.45,0.33,0.82},wing={0.60,0.44,0.94}}
 }
 
--- The complete loop is 52 seconds. Transitions overlap for two seconds so
--- clear skies, wind, rain, storms, mist, and snow flow into one another.
+-- The complete loop is 115 seconds. Longer phases and three-second crossfades
+-- let each weather mood settle in before clear, breeze, rain, storm, and mist
+-- flow into one another.
 local WEATHER_SEGMENTS = {
-  {name="clear",frames=360}, {name="breeze",frames=300},
-  {name="rain",frames=540}, {name="storm",frames=420},
-  {name="mist",frames=420}, {name="snow",frames=540},
-  {name="clear",frames=540}
+  {name="clear",frames=1200}, {name="breeze",frames=900},
+  {name="rain",frames=1200}, {name="storm",frames=900},
+  {name="mist",frames=1200}, {name="clear",frames=1500}
 }
-local WEATHER_FADE = 120
-local WEATHER_WIND = {clear=1,breeze=2.0,rain=1.45,storm=2.45,mist=0.55,snow=0.8}
+local WEATHER_FADE = 180
+local WEATHER_WIND = {clear=1,breeze=2.0,rain=1.45,storm=2.45,mist=0.55}
 
 -- Exact browser palette progression from src/landingpage.jsx.
 local SKY_CYCLES = {
@@ -498,9 +498,6 @@ local function drawWeatherBackgroundMode(mode,alpha)
       love.graphics.setColor(0.93,0.97,1,(0.025+p.size*0.014)*alpha)
       love.graphics.ellipse("fill",x,y,80+p.size*34,18+p.size*6)
     end
-  elseif mode=="snow" then
-    love.graphics.setColor(0.48,0.64,0.84,0.055*alpha)
-    love.graphics.rectangle("fill",0,0,W,H-GROUND_H)
   end
 end
 
@@ -532,14 +529,6 @@ local function drawWeatherForegroundMode(mode,alpha)
       local y=55+(p.y%(H-GROUND_H-90))
       love.graphics.setColor(1,1,1,0.12*alpha)
       love.graphics.line(x,y,x+12+p.size*6,y+math.sin(gs.frame*0.03+p.phase)*2)
-    end
-  elseif mode=="snow" then
-    for i=1,72 do
-      local p=gs.weatherParticles[i]
-      local x=(p.x+math.sin(gs.frame*0.018+p.phase)*(8+p.size*3))%W
-      local y=(p.y+gs.frame*(0.42+p.speed*0.13))%(H-GROUND_H)
-      love.graphics.setColor(1,1,1,(0.42+p.size*0.12)*alpha)
-      love.graphics.circle("fill",x,y,p.size)
     end
   end
 end
@@ -704,11 +693,8 @@ local function drawMenu()
   love.graphics.setColor(1,1,1,0.12); love.graphics.rectangle("fill",W/2,statsY+11,1,statsH-22)
   text("HIGH SCORE",statsX+statsW*0.25,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
   text(tostring(gs.hiScore),statsX+statsW*0.25,statsY+50,23,C.yellow,"center",statsW/2-20)
-  text("FEATHERS",statsX+statsW*0.75,statsY+17,9,{0.82,0.88,0.96},"center",statsW/2-20)
-  local menuFeatherBob=math.sin(gs.frame*0.065)*1.4
-  local menuFeatherTilt=-0.12+math.sin(gs.frame*0.045)*0.07
-  drawFeatherShape(statsX+statsW*0.66,statsY+45+menuFeatherBob,0.64,menuFeatherTilt,1)
-  text(tostring(gs.totalFeathers),statsX+statsW*0.75+13,statsY+44,18,C.yellow,"center",76)
+  text("FEATHERS",statsX+statsW*0.75,statsY+19,9,{0.82,0.88,0.96},"center",statsW/2-20)
+  text(tostring(gs.totalFeathers),statsX+statsW*0.75,statsY+50,23,C.yellow,"center",statsW/2-20)
   text(palette.name.." BIRD",statsX+statsW*0.75,statsY+65,7,{1,0.74,0.34,0.88},"center",statsW/2-16)
 
   local pulse=0.7+(0.5+0.5*math.sin(gs.frame*0.1))*0.3
