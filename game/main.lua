@@ -274,11 +274,12 @@ local function weatherAmount(name)
   return amount
 end
 
-local function newState(phase,featherTotal)
+local function newState(phase,featherTotal,lifeCount)
   local hi, board = loadScores()
   return {phase=phase or "splash",frame=0,score=0,hiScore=hi,leaderboard=board,bird=newBird(),pipes={},clouds=newClouds(),stars=newStars(),
     particles={},floatScores={},floatFeathers={},groundX=0,shakeMag=0,shakeX=0,shakeY=0,deathTimer=0,menuBob=0,pipeTimer=0,
-    skyT=0,skyPhase=1,totalFeathers=math.max(loadFeathers(),featherTotal or 0),nextFeatherIn=2,collectibleState=0x46454154,
+    skyT=0,skyPhase=1,totalFeathers=featherTotal~=nil and math.max(0,math.floor(featherTotal)) or loadFeathers(),
+    lives=math.max(0,math.min(3,math.floor(lifeCount or 3))),nextFeatherIn=2,collectibleState=0x46454154,
     weatherClock=0,weatherParticles=newWeatherParticles(),cloudState=0x434c4f55,effectsState=0x45464658}
 end
 
@@ -333,6 +334,12 @@ end
 
 local function triggerDeath()
   if gs.phase ~= "play" then return end
+  gs.lives=math.max(0,gs.lives-1)
+  if gs.lives==0 then
+    gs.totalFeathers=0
+    saveFeathers()
+    print("event=feather_progress_reset reason=third_death")
+  end
   play("hit")
   play("defeat")
   if music then
@@ -348,7 +355,7 @@ local function triggerDeath()
     while #gs.leaderboard > 5 do table.remove(gs.leaderboard) end
   end
   saveScores()
-  print(string.format("event=game_over score=%d best=%d", gs.score, gs.hiScore))
+  print(string.format("event=game_over score=%d best=%d lives=%d", gs.score, gs.hiScore, gs.lives))
 end
 
 local function tickParticles()
@@ -694,11 +701,32 @@ local function drawBird(b)
   love.graphics.pop()
 end
 
+local function pixelHeartShape(x,y,block)
+  love.graphics.rectangle("fill",x+block,y,block*2,block)
+  love.graphics.rectangle("fill",x+block*4,y,block*2,block)
+  love.graphics.rectangle("fill",x,y+block,block*7,block*2)
+  love.graphics.rectangle("fill",x+block,y+block*3,block*5,block)
+  love.graphics.rectangle("fill",x+block*2,y+block*4,block*3,block)
+  love.graphics.rectangle("fill",x+block*3,y+block*5,block,block)
+end
+
+local function drawPixelHeart(x,y,active)
+  love.graphics.setColor(0.18,0.03,0.08,active and 0.88 or 0.42)
+  pixelHeartShape(x+1,y+1,2)
+  love.graphics.setColor(active and 0.96 or 0.18,active and 0.16 or 0.10,active and 0.22 or 0.14,active and 1 or 0.48)
+  pixelHeartShape(x,y,2)
+  if active then
+    love.graphics.setColor(1,0.58,0.62,1)
+    love.graphics.rectangle("fill",x+4,y+2,2,2)
+  end
+end
+
 local function drawHUD()
   love.graphics.setColor(0,0,0,0.3); rounded("fill",W/2-32,8,64,36,8)
   text(tostring(gs.score),W/2,26,22,C.white)
   drawFeatherShape(31,26,0.62,-0.12,1)
   text(tostring(gs.totalFeathers),47,26,11,C.yellow,"left",42)
+  for i=1,3 do drawPixelHeart(96+(i-1)*18,20,i<=gs.lives) end
 end
 
 local function drawMenu()
@@ -983,7 +1011,8 @@ local function action()
   if gs.phase=="splash" then gs.phase="menu"; gs.frame=0; return end
   if gs.phase=="dead" then
     local total=gs.totalFeathers
-    gs=newState("menu",total)
+    local lives=gs.lives>0 and gs.lives or 3
+    gs=newState("menu",total,lives)
     saveFeathers()
     return
   end
@@ -1030,6 +1059,8 @@ function love.load()
   end
   local previewTotalFeathers=tonumber(os.getenv("PECKERTAP_PREVIEW_TOTAL_FEATHERS"))
   if previewTotalFeathers then gs.totalFeathers=math.max(0,math.floor(previewTotalFeathers)) end
+  local previewLives=tonumber(os.getenv("PECKERTAP_PREVIEW_LIVES"))
+  if previewLives then gs.lives=math.max(0,math.min(3,math.floor(previewLives))) end
   if os.getenv("PECKERTAP_PREVIEW_COLLECTIBLE")=="1" then
     gs.pipes[#gs.pipes+1]={x=gs.bird.x+138,topH=gs.bird.y-76,gap=152,passed=false,
       feather={y=gs.bird.y-45,phase=0,collected=false}}
@@ -1038,6 +1069,7 @@ function love.load()
     gs.pipes[#gs.pipes+1]={x=gs.bird.x-PIPE_WIDTH/2,topH=gs.bird.y-70,gap=140,passed=false,
       feather={y=gs.bird.y,phase=0,collected=false}}
   end
+  if os.getenv("PECKERTAP_TEST_DEATH")=="1" then triggerDeath() end
   print("event=startup renderer=love2d resolution=640x480 offline=true features=weather,collectibles,dynamic-music")
 end
 

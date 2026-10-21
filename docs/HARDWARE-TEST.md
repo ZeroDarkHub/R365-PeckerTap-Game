@@ -17,7 +17,9 @@ Do not mark a test passed without observing it on the handheld.
 10. Best score and feather total persist across a reboot.
 11. The HUD and opening screen show the same saved feather total; bird colors
     switch to pink at 10, blue at 20, green at 30, purple at 40, and black at 50.
-    After death or a reboot, both the total and unlocked color remain unchanged.
+    Three pixel hearts appear beside the HUD feather total. Deaths one and two
+    remove one heart but retain color and feathers; death three resets both to
+    yellow/zero, and the next cycle starts with all three hearts restored.
 12. Five intentional crash tests do not create an endless restart loop.
 13. Hold Select + Start for two seconds and verify clean shutdown.
 14. Create the BOOT recovery marker and verify the game is skipped.

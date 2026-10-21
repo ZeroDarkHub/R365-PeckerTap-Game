@@ -103,8 +103,10 @@ Sources:
   edges. One monotonic total persists redundantly in `feathers.txt` and
   `feathers.backup.txt`; the largest valid copy is loaded. That same total drives
   the HUD, opening-screen count, and bird color: yellow at 0, pink at 10, blue at
-  20, green at 30, purple at 40, and black at 50. Death and reboot retain both
-  the count and unlocked color. Feathers do not change score or pipe difficulty.
+  20, green at 30, purple at 40, and black at 50. Three pixel hearts represent
+  the current life cycle. The first two deaths retain the total and color; the
+  third death writes zero to both save copies, returns the bird to yellow, and
+  begins a new three-heart cycle. Feathers do not change score or pipe difficulty.
 - The entire LCD is game scenery; there are no letterbox bars or side panels.
 
 ## Supervision and recovery

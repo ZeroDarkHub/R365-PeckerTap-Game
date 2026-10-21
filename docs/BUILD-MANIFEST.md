@@ -4,10 +4,10 @@ Built on 2026-10-21. These hashes identify the currently prepared artifacts.
 
 | Artifact | SHA-256 |
 |---|---|
-| `dist/PeckerTap-R36S.img` | `c0c19faa216f029ee59db3c224cc0dd655a61eea7b64eec6da598b8f80333d56` |
-| `dist/peckertap-r36s-port.zip` | `366c54c006312c6c9abe1821e3598443929b76e1736e44b2ca7513e615a8d03c` |
-| `dist/peckertap-rootfs-overlay.tar.gz` | `73c71c199850524223f83224aa98107a2a981eb06bb3ba8dd550cb5f9a792fed` |
-| Packaged `peckertap.love` | `3313213aff05d68f878c66e37a34a85c4f8dd5100e97db011bbae222a07149ed` |
+| `dist/PeckerTap-R36S.img` | `306933b2dda31a7d662083ae8c0c577b7168f3423ab69be1e3c8bbbcd8dd776b` |
+| `dist/peckertap-r36s-port.zip` | `adb65d54caf88bcd78113c8831cee65a1cc7e513c5c99140920be0f35e9b242b` |
+| `dist/peckertap-rootfs-overlay.tar.gz` | `b7b3f7a1fdce1758ca74b1d487699b453c252a6aa29976a4571f4a58b2c5c7bb` |
+| Packaged `peckertap.love` | `5cb64191574f840db735a80cb7b1ce1660485a30d475e279d18a46f681c06192` |
 | Real mallard double-quack WAV | `f7cce19871470981e204406290af7dcbcbcf35e21919da3005f2b024542b2f66` |
 | `dist/peckertap-r36s.png` | `fe49a1464307bcfebb48ebcaeda7e5836912c9de225365462951af30e307510f` |
 | `dist/peckertap-r36s-night.png` | `e3e7112211b66499b01a82438b3be66073df3714282c28afcba528b6860c35d0` |
@@ -54,6 +54,10 @@ Mac-side verification completed:
   save copies, then a separate process relaunched at the opening screen with 10
   feathers and the pink bird. The parser now isolates LÖVE's data return value so
   its byte-count return can never be mistaken for `tonumber`'s optional base.
+- Three pixel hearts passed 640×480 visual checks beside the HUD feather count.
+  A forced first death retained pink and 10 feathers while removing one heart;
+  a forced final-heart death wrote both save copies as zero, changed the bird to
+  yellow, and relaunched at the opening screen with yellow and zero feathers.
 
 The edge-to-edge landscape game and soundtrack have run successfully on the
 user's R36S. Not yet verified on physical hardware for this feature revision:

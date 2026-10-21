@@ -16,7 +16,8 @@ project at `~/Desktop/peckertap` is not modified.
 - Risk/reward golden feathers near pipe edges, with a persistent collection
   total and pickup effects. Bird colors permanently advance every ten saved
   feathers through yellow, pink, blue, green, purple, and finally black at 50.
-  Both the unlocked color and its feather count remain after death and reboot.
+  Three pixel hearts track the current life cycle. The unlocked color and feather
+  count survive the first two deaths, then both reset after the third death.
 - The flap, score, occasional real mallard double-quack, collectible sparkle,
   and original descending game-over jingle mixed over the soundtrack.
 - Edge-to-edge 640×480 landscape playfield with the sky, clouds, stars, pipes,
